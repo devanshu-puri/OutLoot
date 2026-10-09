@@ -87,6 +87,14 @@
 - [x] T6.3 Submission draft for DEV Challenge staged on DEV via DevRelay (Draft ID: 4824791) — completed (2026-10-09 23:04)
 - [x] T6.4 Push repository to GitHub: https://github.com/devanshu-puri/OutLoot with tags #devchallenge #touchgrass #hf26challenge #opensource — completed (2026-10-09 23:04)
 
+## PHASE P7 — UI Overhaul & Tactical Outdoor HUD (M11)
+- [x] T7.1 Single Top-Left Circular Theme Toggle (`🌙` moonlight in dark mode ↔ `☀️` sun in light mode) switching OpenStreetMap tile rendering — implemented & verified (2026-10-10 00:05)
+- [x] T7.2 Removed center fallback mission overlay card from map view, providing an unobstructed edge-to-edge interactive map view — implemented (2026-10-10 00:05)
+- [x] T7.3 Integrated `VCR_OSD_MONO_1.001` font from OutLoot assets across all HUD countdown timers, distance counters, status chips, coordinates, and metrics — implemented (2026-10-10 00:05)
+- [x] T7.4 Dotted clock progress ring dial (36 discrete circular dots evenly spaced around circumference that fill and illuminate sequentially as cycle time progresses) — implemented in `web/hud.js` & `web/style.css` (2026-10-10 00:05)
+- [x] T7.5 Integrated `walk cycling shoes.json` Lottie animation with offline `lottie.min.js` beside Next Item Drop — implemented in `web/hud.js` (2026-10-10 00:05)
+- [x] T7.6 Strict horizontal HUD alignment: `| [Timer / Dotted Dial] | [Next Item Drop details] | [Walking Shoes animation] |` — verified (2026-10-10 00:05)
+
 ## MANUAL E2E CHECKLIST (sim mode)
 - [ ] Start session → HUD shows ACTIVE · [ ] sim walk advances progress ring · [ ] stationary stretch pauses ring
 - [ ] "Item ready" cue fires · [ ] collect far away → "out of range" message, 0 pts · [ ] collect near → +pts once
