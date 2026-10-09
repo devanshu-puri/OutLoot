@@ -55,9 +55,13 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-body {
+body, button, input, select, textarea {
   font-family: 'VCR_OSD_MONO', monospace;
   color: var(--text-main);
+  letter-spacing: 0.2px;
+}
+
+body {
   background: var(--bg-deep);
   background-image: 
     radial-gradient(circle at 15% 15%, rgba(167, 139, 250, 0.08) 0%, transparent 45%),
@@ -478,8 +482,10 @@ html, body {
 .btn-floating-cta {
   background: linear-gradient(135deg, var(--grass-primary), #059669);
   color: #ffffff;
+  font-family: 'VCR_OSD_MONO', monospace;
   font-size: 16px;
   font-weight: 700;
+  letter-spacing: 0.5px;
   height: 54px;
   border-radius: var(--radius-full);
   border: none;
@@ -702,7 +708,7 @@ html, body {
   flex: 1;
   height: 48px;
   border-radius: var(--radius-full);
-  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-family: 'VCR_OSD_MONO', monospace;
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
@@ -1051,6 +1057,24 @@ html, body {
 }
 
 /* Wellbeing / Screen Time Screen */
+#screen-wellbeing {
+  background: url('/assets/wellbeing_back.png') center top / cover no-repeat fixed;
+  background-color: #0b1126;
+  position: relative;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+#screen-wellbeing .wellbeing-container {
+  padding: 24px 20px 100px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-height: 100%;
+  background: linear-gradient(180deg, rgba(11, 17, 38, 0.65) 0%, rgba(11, 17, 38, 0.82) 45%, rgba(8, 12, 28, 0.94) 100%);
+  backdrop-filter: blur(2px);
+}
+
 .wellbeing-container {
   padding: 24px 20px;
   display: flex;
@@ -1846,6 +1870,23 @@ html, body {
 }
 
 /* ---------------- 3 REWARD MARKETPLACE SECTIONS ---------------- */
+#screen-rewards {
+  background: url('/assets/rewards.png') center top / cover no-repeat fixed;
+  background-color: #241604;
+  position: relative;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+#screen-rewards .rewards-page-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-height: 100%;
+  padding: 24px 20px 110px;
+  background: linear-gradient(180deg, rgba(28, 19, 5, 0.62) 0%, rgba(20, 15, 6, 0.80) 45%, rgba(13, 10, 8, 0.94) 100%);
+  backdrop-filter: blur(2px);
+}
 
 .rewards-page-container {
   display: flex;
