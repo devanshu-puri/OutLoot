@@ -8,6 +8,7 @@ import { cues } from './cues.js';
 import { MapController } from './map.js';
 import { HUDController } from './hud.js';
 import { SimulatorController } from './sim.js';
+import { BottomNavAnimator } from './nav.js';
 
 class App {
   constructor() {
@@ -30,6 +31,7 @@ class App {
     this.mapCtrl = new MapController('map');
     this.hudCtrl = null;
     this.simCtrl = null;
+    this.bottomNav = null;
 
     this.init();
   }
@@ -37,6 +39,7 @@ class App {
   async init() {
     this.hudCtrl = new HUDController();
     this.simCtrl = new SimulatorController((sample) => this.handleSimSample(sample));
+    this.bottomNav = new BottomNavAnimator();
 
     this.setupNavigation();
     this.setupMapScreenControls();
@@ -230,20 +233,27 @@ class App {
     navButtons.forEach((btn) => {
       btn.addEventListener('click', () => {
         const screenId = btn.dataset.screen;
-        this.showScreen(screenId);
+        const index = parseInt(btn.dataset.index || '0', 10);
+        this.showScreen(screenId, index);
       });
     });
   }
 
-  showScreen(screenId) {
+  showScreen(screenId, explicitIndex = null) {
     document.querySelectorAll('.screen').forEach((s) => s.classList.remove('active'));
-    document.querySelectorAll('.tab-btn').forEach((b) => b.classList.remove('active'));
 
     const targetScreen = document.getElementById(screenId);
     if (targetScreen) targetScreen.classList.add('active');
 
     const targetTab = document.querySelector(`.tab-btn[data-screen="${screenId}"]`);
-    if (targetTab) targetTab.classList.add('active');
+    let tabIndex = explicitIndex;
+    if (targetTab && tabIndex === null) {
+      tabIndex = parseInt(targetTab.dataset.index || '0', 10);
+    }
+
+    if (this.bottomNav && tabIndex !== null && !isNaN(tabIndex)) {
+      this.bottomNav.updateActiveTab(tabIndex, true);
+    }
 
     if (screenId === 'screen-map') {
       setTimeout(() => {

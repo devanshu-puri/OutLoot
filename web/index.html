@@ -366,24 +366,67 @@
       🌱 Friend Nudge!
     </div>
 
-    <!-- Bottom Navigation Bar (4 Fluid Tabs) -->
+    <!-- Animated Curved Bottom Navigation Bar (with floating green bubble & notch cutout) -->
     <nav class="bottom-tabs">
-      <button class="tab-btn active" data-screen="screen-map">
-        <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
-        Map
-      </button>
-      <button class="tab-btn" data-screen="screen-social">
-        <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
-        Social
-      </button>
-      <button class="tab-btn" data-screen="screen-wellbeing">
-        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14.5v-9l6 4.5-6 4.5z"/></svg>
-        Wellbeing
-      </button>
-      <button class="tab-btn" data-screen="screen-rewards">
-        <svg viewBox="0 0 24 24"><path d="M20 6h-2.18c.11-.31.18-.65.18-1 0-1.66-1.34-3-3-3-1.05 0-1.96.54-2.5 1.35l-.5.67-.5-.68C10.96 2.54 10.05 2 9 2 7.34 2 6 3.34 6 5c0 .35.07.69.18 1H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-5-2c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zM9 4c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm11 15H4v-2h16v2zm0-5H4V8h5.08L7 10.83 8.62 12 11 8.76V8h2v.76L15.38 12 17 10.83 14.92 8H20v6z"/></svg>
-        Rewards
-      </button>
+      <div class="bottom-nav-shell">
+        <!-- SVG canvas with animated scooped notch -->
+        <svg class="nav-bg-svg" viewBox="0 0 400 62" preserveAspectRatio="none">
+          <path id="nav-bar-path" class="nav-bar-path" d="" />
+        </svg>
+
+        <!-- Floating Green Active Indicator Bubble -->
+        <div id="nav-floating-bubble" class="nav-floating-bubble">
+          <div id="bubble-icon-slot" class="bubble-icon-slot"></div>
+        </div>
+
+        <!-- The 4 Tab Buttons Row -->
+        <div class="nav-tabs-row">
+          <button class="tab-btn active" data-screen="screen-map" data-index="0" title="Map">
+            <span class="tab-icon-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                <polyline points="9 22 9 12 15 12 15 22"/>
+              </svg>
+            </span>
+            <span class="tab-label">Map</span>
+          </button>
+
+          <button class="tab-btn" data-screen="screen-social" data-index="1" title="Social">
+            <span class="tab-icon-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+              </svg>
+            </span>
+            <span class="tab-label">Social</span>
+          </button>
+
+          <button class="tab-btn" data-screen="screen-wellbeing" data-index="2" title="Wellbeing">
+            <span class="tab-icon-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <polyline points="12 6 12 12 16 14"/>
+              </svg>
+            </span>
+            <span class="tab-label">Wellbeing</span>
+          </button>
+
+          <button class="tab-btn" data-screen="screen-rewards" data-index="3" title="Rewards">
+            <span class="tab-icon-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 12 20 22 4 22 4 12"/>
+                <rect x="2" y="7" width="20" height="5"/>
+                <line x1="12" y1="22" x2="12" y2="7"/>
+                <path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/>
+                <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/>
+              </svg>
+            </span>
+            <span class="tab-label">Rewards</span>
+          </button>
+        </div>
+      </div>
     </nav>
   </div>
 
