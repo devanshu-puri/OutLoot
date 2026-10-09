@@ -27,8 +27,8 @@
       </div>
     </header>
 
-    <!-- SCREEN 1: Welcome & Discovery -->
-    <section id="screen-welcome" class="screen active">
+    <!-- SCREEN 1: Welcome & Discovery Rules -->
+    <section id="screen-welcome" class="screen">
       <div class="welcome-hero-banner">
         <span class="hero-pill-badge">🌱 Hacktoberfest 2026 Open-Source AI</span>
         <h1 class="hero-heading">Walk Outside.<br/>Turn Screen Time<br/>Into Real Loot.</h1>
@@ -73,12 +73,42 @@
     </section>
 
     <!-- SCREEN 2: Active Walk Map & One-Glance Dial -->
-    <section id="screen-map" class="screen">
+    <section id="screen-map" class="screen active">
       <div class="map-screen-wrapper">
         <div id="map"></div>
 
-        <!-- HUD Top Status Chip -->
-        <div class="hud-overlay">
+        <!-- Floating Open-Source Map Controls Top Bar -->
+        <div class="map-top-bar">
+          <div class="map-provider-pills">
+            <button class="map-pill-btn active" data-style="dark" title="Free Dark Matter style">🌙 Dark</button>
+            <button class="map-pill-btn" data-style="osm" title="Free 100% OpenStreetMap Standard">🗺️ OSM</button>
+            <button class="map-pill-btn" data-style="voyager" title="Free Outdoor Voyager style">🌲 Trails</button>
+          </div>
+          <button id="btn-locate-me" class="map-locate-btn" title="Center map on my location">📍</button>
+        </div>
+
+        <!-- IDLE STATE: Floating Glass Card when not currently walking -->
+        <div id="idle-walk-card" class="idle-walk-glass-card">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span class="hero-pill-badge">🌱 Live Open-Source Map</span>
+            <span id="map-coords-indicator" style="font-size:11px; color:var(--text-faint); font-family:'JetBrains Mono',monospace;">GPS Ready</span>
+          </div>
+          <h2 style="font-size:20px; font-weight:800; color:#fff; margin-top:2px;">Step Outside &amp; Touch Grass</h2>
+          <p style="font-size:13px; color:var(--text-mute); line-height:1.45;">
+            Real foot movement unlocks nearby drop relics, generates local Gemma AI missions, and earns sponsor points!
+          </p>
+          <div style="display:flex; gap:10px; margin-top:2px;">
+            <button id="btn-start-walk-map" class="btn-floating-cta" style="flex:2; margin:0;">
+              <span>🚶</span> Start Walk
+            </button>
+            <button id="btn-sim-walk-map" class="btn-floating-cta" style="flex:1; margin:0; background:rgba(255,255,255,0.08); border:1px solid var(--border-subtle); color:var(--text-mute); box-shadow:none;">
+              ⚡ SIM Walk
+            </button>
+          </div>
+        </div>
+
+        <!-- ACTIVE WALK: HUD Top Status & One-Glance Dial -->
+        <div id="hud-overlay" class="hud-overlay hidden">
           <div class="hud-pill-chip">
             <div id="hud-status-indicator" class="status-dot-active"></div>
             <span id="hud-status-text" style="font-size:12px; font-weight:700; color:#fff; letter-spacing:0.5px;">ACTIVE WALK</span>
@@ -115,8 +145,8 @@
           </p>
         </div>
 
-        <!-- Bottom Walk Controls -->
-        <div style="position:absolute; bottom:16px; left:16px; right:16px; z-index:500; display:flex; gap:12px;">
+        <!-- Active Walk Bottom Controls -->
+        <div id="active-walk-controls" class="active-walk-controls hidden">
           <button id="btn-pause-walk" class="btn-floating-cta" style="flex:1; margin:0; background:rgba(22,19,44,0.9); border:1px solid var(--border-card); color:#fff; box-shadow:none;">
             Pause
           </button>

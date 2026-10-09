@@ -382,6 +382,122 @@ body {
   z-index: 1;
 }
 
+/* Floating Map Controls Top Bar */
+.map-top-bar {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  right: 14px;
+  z-index: 500;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  pointer-events: none;
+}
+
+.map-provider-pills {
+  display: flex;
+  gap: 4px;
+  background: rgba(14, 11, 31, 0.88);
+  backdrop-filter: blur(16px);
+  padding: 4px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-card);
+  pointer-events: auto;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.map-pill-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-mute);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 5px 12px;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.map-pill-btn:hover {
+  color: #fff;
+}
+
+.map-pill-btn.active {
+  background: rgba(16, 185, 129, 0.18);
+  color: var(--grass-light);
+  border-color: rgba(16, 185, 129, 0.35);
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
+}
+
+.map-locate-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: rgba(14, 11, 31, 0.88);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--border-card);
+  color: #fff;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  pointer-events: auto;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+  transition: all 0.2s ease;
+}
+
+.map-locate-btn:hover {
+  transform: scale(1.06);
+  border-color: var(--grass-light);
+  box-shadow: 0 0 14px rgba(16, 185, 129, 0.3);
+}
+
+/* Idle State Floating Card on Map */
+.idle-walk-glass-card {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  right: 16px;
+  z-index: 500;
+  background: rgba(15, 12, 33, 0.92);
+  backdrop-filter: blur(24px);
+  border: 1px solid rgba(167, 139, 250, 0.25);
+  border-radius: var(--radius-xl);
+  padding: 20px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: auto;
+}
+
+.idle-walk-glass-card.hidden {
+  opacity: 0;
+  transform: translateY(40px);
+  pointer-events: none;
+}
+
+.active-walk-controls {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  right: 16px;
+  z-index: 500;
+  display: flex;
+  gap: 12px;
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.active-walk-controls.hidden {
+  opacity: 0;
+  transform: translateY(40px);
+  pointer-events: none;
+}
+
 /* Modern HUD Overlay */
 .hud-overlay {
   position: absolute;

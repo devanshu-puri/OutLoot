@@ -52,20 +52,80 @@ class App {
     // Start background nudge poller
     this.startNudgePoller();
 
-    // Setup simulator toggle
+    // Initialize map immediately on startup so user always sees the live map
+    this.mapCtrl.init();
+
+    // Try fetching immediate GPS position for user pin
+    if ('geolocation' in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          this.handleNewSample({
+            t: pos.timestamp / 1000.0,
+            lat: pos.coords.latitude,
+            lon: pos.coords.longitude,
+            accuracy_m: pos.coords.accuracy || 5.0
+          });
+          const coordsText = document.getElementById('map-coords-indicator');
+          if (coordsText) coordsText.textContent = `${pos.coords.latitude.toFixed(3)}, ${pos.coords.longitude.toFixed(3)}`;
+        },
+        (err) => console.log('Location permission pending or ungranted'),
+        { enableHighAccuracy: true, timeout: 6000 }
+      );
+    }
+
+    // Setup Open-Source Map Provider Pills (Dark / OSM / Trails)
+    document.querySelectorAll('.map-pill-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.map-pill-btn').forEach((b) => b.classList.remove('active'));
+        btn.classList.add('active');
+        this.mapCtrl.setTileProvider(btn.dataset.style);
+      });
+    });
+
+    // Locate Me Button
+    const btnLocate = document.getElementById('btn-locate-me');
+    if (btnLocate) {
+      btnLocate.addEventListener('click', () => this.mapCtrl.centerOnUser());
+    }
+
+    // Start walk buttons
+    const startWalkBtn = document.getElementById('btn-start-walk');
+    if (startWalkBtn) {
+      startWalkBtn.addEventListener('click', () => this.startSessionFlow());
+    }
+
+    const startWalkMap = document.getElementById('btn-start-walk-map');
+    if (startWalkMap) {
+      startWalkMap.addEventListener('click', () => this.startSessionFlow());
+    }
+
+    const simWalkMap = document.getElementById('btn-sim-walk-map');
+    if (simWalkMap) {
+      simWalkMap.addEventListener('click', () => {
+        const running = this.simCtrl.toggle();
+        simWalkMap.textContent = running ? '⚡ SIM ON' : '⚡ SIM Walk';
+        const topSimBtn = document.getElementById('sim-toggle-btn');
+        if (topSimBtn) {
+          topSimBtn.classList.toggle('active', running);
+          topSimBtn.textContent = running ? '⚡ SIM ON' : 'SIM MODE';
+        }
+        if (running && !this.currentSession) {
+          this.startSessionFlow();
+        }
+      });
+    }
+
+    // Setup simulator toggle in header
     const simBtn = document.getElementById('sim-toggle-btn');
     if (simBtn) {
       simBtn.addEventListener('click', () => {
         const running = this.simCtrl.toggle();
         simBtn.classList.toggle('active', running);
         simBtn.textContent = running ? '⚡ SIM ON' : 'SIM MODE';
+        if (running && !this.currentSession) {
+          this.startSessionFlow();
+        }
       });
-    }
-
-    // Setup start walk button on welcome screen
-    const startWalkBtn = document.getElementById('btn-start-walk');
-    if (startWalkBtn) {
-      startWalkBtn.addEventListener('click', () => this.startSessionFlow());
     }
 
     // Setup HUD controls
@@ -107,6 +167,16 @@ class App {
         this.closeTouchGrassModal();
       });
     }
+  }
+
+  setMapActiveMode(isActive) {
+    const idleCard = document.getElementById('idle-walk-card');
+    const hudOverlay = document.getElementById('hud-overlay');
+    const activeControls = document.getElementById('active-walk-controls');
+
+    if (idleCard) idleCard.classList.toggle('hidden', isActive);
+    if (hudOverlay) hudOverlay.classList.toggle('hidden', !isActive);
+    if (activeControls) activeControls.classList.toggle('hidden', !isActive);
   }
 
   async ensureAuth() {
@@ -155,8 +225,9 @@ class App {
 
     if (screenId === 'screen-map') {
       setTimeout(() => {
+        this.mapCtrl.init();
         if (this.mapCtrl.map) this.mapCtrl.map.invalidateSize();
-      }, 100);
+      }, 50);
     }
 
     if (screenId === 'screen-social') {
@@ -319,6 +390,7 @@ class App {
   onSessionStarted() {
     this.showScreen('screen-map');
     this.mapCtrl.init();
+    this.setMapActiveMode(true);
     this.hudCtrl.update(this.currentSession);
     this.startLocationWatcher();
     this.startSampleBatchPoster();
@@ -540,6 +612,7 @@ class App {
       });
       if (resp.ok) {
         const finalSession = await resp.json();
+        this.setMapActiveMode(false);
         this.renderSummaryScreen(finalSession);
         this.currentSession = null;
         if (this.sampleBatchInterval) clearInterval(this.sampleBatchInterval);
