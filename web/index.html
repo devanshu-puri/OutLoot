@@ -6,7 +6,7 @@
   <title>OutLoot 🌿✦</title>
   <link rel="manifest" href="/manifest.json" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-  <link rel="stylesheet" href="/style.css?v=2.4" />
+  <link rel="stylesheet" href="/style.css?v=2.5" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script src="/assets/lottie.min.js"></script>
   <script src="/assets/walk_shoes_data.js"></script>
@@ -400,22 +400,109 @@
 
     <!-- SCREEN 5: Sponsor Rewards & Marketplace -->
     <section id="screen-rewards" class="screen">
-      <div class="wellbeing-container">
-        <div>
-          <h2 style="font-size:24px; font-weight:800; letter-spacing:-0.5px;">Sponsor Rewards</h2>
-          <p style="font-size:13px; color:var(--text-mute);">Redeem your verified walk points for demo sponsor vouchers.</p>
+      <div class="wellbeing-container rewards-page-container">
+        <!-- Rewards Header & Points Overview -->
+        <div class="rewards-header-row">
+          <div>
+            <h2 style="font-size:24px; font-weight:800; letter-spacing:-0.5px; margin:0;">Sponsor Rewards</h2>
+            <p style="font-size:13px; color:var(--text-mute); margin-top:2px;">Redeem verified walk points for brand perks, cutout vouchers &amp; direct price slashes.</p>
+          </div>
+          <div class="rewards-wallet-chip">
+            <span class="wallet-icon">⚡</span>
+            <div>
+              <div class="wallet-label">YOUR POINTS</div>
+              <div id="rewards-points-val" class="wallet-val">0 pts</div>
+            </div>
+          </div>
         </div>
 
-        <div id="rewards-grid" class="rewards-grid-cards">
-          <!-- Populated by app.js -->
+        <!-- SECTION A: Top Collaborated Brands (Horizontal Scrollable) -->
+        <div class="rewards-section-block">
+          <div class="rewards-section-header">
+            <div>
+              <h3 class="rewards-section-title">Top brands for you</h3>
+              <p class="rewards-section-sub">Tap brand to view perks &amp; points exchange</p>
+            </div>
+            <span class="scroll-hint-chip">Slide ➔</span>
+          </div>
+          <div id="brands-scroll-container" class="brands-scroll-track">
+            <!-- Populated dynamically by app.js -->
+          </div>
         </div>
 
-        <!-- My Vouchers Section -->
-        <div style="margin-top:14px;">
-          <h3 style="font-size:16px; font-weight:700; margin-bottom:8px; color:#fff;">My Claimed Vouchers</h3>
+        <!-- SECTION B: Live Discount Coupons (Cutout Ticket Stubs) -->
+        <div class="rewards-section-block">
+          <div class="rewards-section-header">
+            <div>
+              <h3 class="rewards-section-title">Live Walk Coupons</h3>
+              <p class="rewards-section-sub">Perforated ticket vouchers with instant redeemable stubs</p>
+            </div>
+            <span class="hero-pill-badge" style="background:rgba(255,211,42,0.15); color:#ffd32a; border-color:#ffd32a;">3 ACTIVE</span>
+          </div>
+          <div id="live-coupons-container" class="coupons-stack-container">
+            <!-- Populated dynamically by app.js -->
+          </div>
+        </div>
+
+        <!-- SECTION C: Point-to-Rupee Price Slash / Buy at Less Price -->
+        <div class="rewards-section-block">
+          <div class="rewards-section-header">
+            <div>
+              <h3 class="rewards-section-title">Offers for you!</h3>
+              <p class="rewards-section-sub">Shop best outdoor brands. Exchange points to slash prices</p>
+            </div>
+            <span class="hero-pill-badge" style="background:rgba(16,185,129,0.18); color:#10b981; border-color:#10b981;">POINTS SLASH</span>
+          </div>
+          <div id="price-slash-products-grid" class="price-slash-grid">
+            <!-- Populated dynamically by app.js -->
+          </div>
+        </div>
+
+        <!-- Original / Backend Rewards Grid (Hidden fallback) -->
+        <div style="display:none;">
+          <div id="rewards-grid" class="rewards-grid-cards"></div>
+        </div>
+
+        <!-- SECTION D: My Claimed Vouchers & Orders -->
+        <div class="rewards-section-block" style="margin-top:6px;">
+          <h3 class="rewards-section-title" style="margin-bottom:8px;">My Claimed Vouchers &amp; Passes</h3>
           <div id="my-vouchers-container">
             <!-- Populated by app.js -->
           </div>
+        </div>
+      </div>
+
+      <!-- Brand Perks Modal -->
+      <div id="brand-perks-modal" class="pixel-modal-backdrop hidden">
+        <div class="pixel-profile-card brand-modal-card">
+          <button id="btn-close-brand-modal" class="pixel-modal-close-btn" title="Close">✕</button>
+          
+          <div class="brand-modal-header">
+            <div id="brand-modal-logo" class="brand-modal-logo-frame">PUMA</div>
+            <h2 id="brand-modal-name" class="profile-name">Puma India</h2>
+            <div id="brand-modal-discount-tag" class="hero-pill-badge" style="background:#ffd32a; color:#000; font-weight:800; border:none;">
+              FLAT 60% OFF
+            </div>
+          </div>
+
+          <div class="brand-modal-body">
+            <p id="brand-modal-desc" style="font-size:13px; color:#cbd5e1; line-height:1.5;">
+              Exclusive collaboration offer for OutLoot trail walkers! Redeem your points for an instant 60% discount code.
+            </p>
+            <div class="brand-perks-box">
+              <div style="font-size:10px; color:var(--text-faint); font-weight:800; text-transform:uppercase;">Points Exchange Rate</div>
+              <div id="brand-modal-exchange" style="font-size:17px; font-weight:900; color:#10b981; font-family:'VCR_OSD_MONO', monospace; margin-top:2px;">
+                120 Points = Flat 60% Off
+              </div>
+            </div>
+            <div style="font-size:11px; color:#94a3b8; font-style:italic;">
+              *Single-use voucher. Valid on official brand app &amp; stores for 30 days.
+            </div>
+          </div>
+
+          <button id="btn-brand-exchange-action" class="btn-floating-cta" style="width:100%; margin:8px 0 0; justify-content:center;">
+            ✦ Exchange Points &amp; Unlock Code
+          </button>
         </div>
       </div>
     </section>
@@ -542,6 +629,6 @@
     </nav>
   </div>
 
-  <script type="module" src="/app.js?v=2.4"></script>
+  <script type="module" src="/app.js?v=2.5"></script>
 </body>
 </html>

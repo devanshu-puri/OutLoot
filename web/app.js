@@ -1557,53 +1557,416 @@ class App {
 
   /* ---------------- REWARDS & MARKETPLACE ---------------- */
 
+  /* ---------------- REWARDS & MARKETPLACE ---------------- */
+
+  getPartnerBrandsData() {
+    return [
+      {
+        id: 'brand_puma',
+        name: 'PUMA',
+        fullName: 'Puma India',
+        offer: 'Flat 60% Off',
+        pointsCost: 120,
+        accent: 'accent-gold',
+        perks: 'Flat 60% OFF sitewide on official Puma Nitro running and trail shoes for verified OutLoot walkers.'
+      },
+      {
+        id: 'brand_adidas',
+        name: 'adidas',
+        fullName: 'Adidas Outdoor',
+        offer: 'Flat 60% Off',
+        pointsCost: 150,
+        accent: 'accent-cyan',
+        perks: 'Flat 60% OFF Terrex trail running and outdoor sportswear gear collections.'
+      },
+      {
+        id: 'brand_new_balance',
+        name: 'NB',
+        fullName: 'New Balance',
+        offer: '40% Off Trail',
+        pointsCost: 100,
+        accent: 'accent-green',
+        perks: '40% OFF Hierro and Fresh Foam outdoor trekking and city-walk sneaker lineups.'
+      },
+      {
+        id: 'brand_snitch',
+        name: '#SNITCH',
+        fullName: 'Snitch Streetwear',
+        offer: 'Flat 50% Off',
+        pointsCost: 80,
+        accent: 'accent-gold',
+        perks: 'Flat 50% OFF trendy outdoor cargo pants, oversized tees, and utility shirts.'
+      },
+      {
+        id: 'brand_loreal',
+        name: "L'ORÉAL",
+        fullName: "L'Oréal Paris",
+        offer: 'Flat 50% Off',
+        pointsCost: 90,
+        accent: 'accent-pink',
+        perks: 'Flat 50% OFF UV Defender sunscreens and outdoor hydration serums.'
+      },
+      {
+        id: 'brand_nasher',
+        name: 'nasher miles',
+        fullName: 'Nasher Miles',
+        offer: 'Up to 85% Off',
+        pointsCost: 110,
+        accent: 'accent-cyan',
+        perks: 'Up to 85% OFF durable outdoor hard-shell rucksacks and carry-on luggage.'
+      },
+      {
+        id: 'brand_giva',
+        name: 'GIVA ✦',
+        fullName: 'GIVA Jewellery',
+        offer: 'Up to 60% Off',
+        pointsCost: 75,
+        accent: 'accent-gold',
+        perks: 'Up to 60% OFF sterling silver outdoor-inspired minimalist bracelets and pendants.'
+      },
+      {
+        id: 'brand_beardo',
+        name: 'BEARDO',
+        fullName: 'Beardo Grooming',
+        offer: '60% Off Groom',
+        pointsCost: 70,
+        accent: 'accent-green',
+        perks: '60% OFF active walker sun guard body wash, sunscreen, and beard oil sets.'
+      }
+    ];
+  }
+
+  getLiveCouponsData() {
+    return [
+      {
+        id: 'coup_larana',
+        store: 'Larana Organic Café',
+        title: 'DISCOUNT COUPON',
+        discount: '30%',
+        pointsCost: 60,
+        illustration: '🍣',
+        validity: 'VALID UNTIL OCT 24TH',
+        stubClass: 'stub-green',
+        desc: 'Valid on healthy outdoor protein bowls and organic salads.'
+      },
+      {
+        id: 'coup_trailhead',
+        store: 'Trailhead Roasters',
+        title: 'DISCOUNT COUPON',
+        discount: '20%',
+        pointsCost: 40,
+        illustration: '☕',
+        validity: 'VALID UNTIL OCT 24TH',
+        stubClass: 'stub-orange',
+        desc: 'Valid on cold brews, double espresso and trail snacks.'
+      },
+      {
+        id: 'coup_outback',
+        store: 'Outback Kiosk',
+        title: 'DISCOUNT COUPON',
+        discount: '10%',
+        pointsCost: 25,
+        illustration: '🍡',
+        validity: 'VALID UNTIL OCT 24TH',
+        stubClass: 'stub-pink',
+        desc: 'Valid on hydration energy bars and fruit skewers.'
+      }
+    ];
+  }
+
+  getPriceSlashProductsData() {
+    return [
+      {
+        id: 'prod_xiaomi_tv',
+        title: 'Xiaomi F Series 108 cm (43 inch) Ultra HD (4K) LED Smart TV',
+        icon: '📺',
+        rating: '4.3',
+        reviews: '88.4K+',
+        mrp: '₹37,999',
+        storePrice: '₹23,999',
+        pointsCost: 200,
+        slashText: '-₹4,000 OFF with 200 pts',
+        finalPrice: '₹19,999'
+      },
+      {
+        id: 'prod_oppo_phone',
+        title: 'Oppo K14 Plus 5G (Solar Orange, 128 GB Outdoor Tough)',
+        icon: '📱',
+        rating: '4.3',
+        reviews: '55K+',
+        mrp: '₹64,999',
+        storePrice: '₹32,999',
+        pointsCost: 250,
+        slashText: '-₹5,500 OFF with 250 pts',
+        finalPrice: '₹27,499'
+      },
+      {
+        id: 'prod_airpods',
+        title: 'Apple AirPods Pro 3 ANC Bluetooth Headset',
+        icon: '🎧',
+        rating: '4.6',
+        reviews: '1.4K+',
+        mrp: '₹24,900',
+        storePrice: '₹18,900',
+        pointsCost: 180,
+        slashText: '-₹3,832 OFF with 180 pts',
+        finalPrice: '₹15,068'
+      },
+      {
+        id: 'prod_smartwatch',
+        title: 'OutLoot Pro GPS Multisport Trail Smartwatch (Amoled)',
+        icon: '⌚',
+        rating: '4.7',
+        reviews: '4.1K+',
+        mrp: '₹9,999',
+        storePrice: '₹4,999',
+        pointsCost: 120,
+        slashText: '-₹2,500 OFF with 120 pts',
+        finalPrice: '₹2,499'
+      }
+    ];
+  }
+
   async loadRewardsScreen() {
-    const grid = document.getElementById('rewards-grid');
+    const brandsTrack = document.getElementById('brands-scroll-container');
+    const couponsTrack = document.getElementById('live-coupons-container');
+    const priceSlashGrid = document.getElementById('price-slash-products-grid');
     const vouchersContainer = document.getElementById('my-vouchers-container');
-    if (!grid) return;
+    const walletPtsEl = document.getElementById('rewards-points-val');
 
-    try {
-      const [rewResp, redResp] = await Promise.all([
-        fetch('/api/rewards'),
-        fetch('/api/redemptions', { headers: this.getHeaders() })
-      ]);
+    // Update Points Wallet Display
+    if (walletPtsEl) {
+      walletPtsEl.textContent = `${this.totalPoints || 0} pts`;
+    }
 
-      if (rewResp.ok) {
-        const rewards = await rewResp.json();
-        grid.innerHTML = rewards.map((r, idx) => `
-          <div class="reward-card ${idx === 0 ? 'featured' : ''}">
-            <div class="reward-card-top">
-              <h3 class="reward-title">${r.title}</h3>
-              <span class="reward-cost">${r.cost_points} pts</span>
+    // 1. Render SECTION A: Top Collaborated Brands (Horizontal Scrollable)
+    if (brandsTrack) {
+      const brands = this.getPartnerBrandsData();
+      brandsTrack.innerHTML = brands.map((b) => `
+        <div class="brand-card-item ${b.accent}" data-brand-id="${b.id}">
+          <span class="brand-lock-badge">🔒</span>
+          <div class="brand-logo-frame">${b.name}</div>
+          <div class="brand-offer-pill">${b.offer}</div>
+        </div>
+      `).join('');
+
+      brandsTrack.querySelectorAll('.brand-card-item').forEach((card) => {
+        card.addEventListener('click', () => {
+          const brandId = card.dataset.brandId;
+          const brand = brands.find((x) => x.id === brandId);
+          if (brand) this.openBrandModal(brand);
+        });
+      });
+    }
+
+    // 2. Render SECTION B: Live Discount Coupons (Cutout Ticket Stubs)
+    if (couponsTrack) {
+      const coupons = this.getLiveCouponsData();
+      couponsTrack.innerHTML = coupons.map((c) => `
+        <div class="coupon-ticket">
+          <div class="coupon-left-notch"></div>
+          <div class="coupon-body">
+            <div class="coupon-info-col">
+              <span class="coupon-store-tag">🌿 ${c.store}</span>
+              <div class="coupon-main-title">${c.title}</div>
+              <div class="coupon-valid-text">${c.validity} · ${c.desc}</div>
             </div>
-            <p class="reward-desc">${r.description}</p>
-            <p class="reward-terms">${r.terms} · Stock: ${r.stock}</p>
-            <button class="${idx === 0 ? 'btn-floating-cta' : 'btn-small-pill'}" onclick="window.appInstance.redeemReward('${r.id}', ${r.cost_points})" style="margin-top:10px; width:100%; border-radius:var(--radius-pill); justify-content:center;">
-              Redeem Code
+            <div class="coupon-illustration">${c.illustration}</div>
+          </div>
+          <div class="coupon-divider"></div>
+          <div class="coupon-stub ${c.stubClass}">
+            <span class="coupon-stub-label">VOUCHER</span>
+            <div class="coupon-stub-discount">${c.discount}</div>
+            <button class="coupon-claim-btn" onclick="window.appInstance.claimLiveCoupon('${c.id}', '${c.store} ${c.discount}', ${c.pointsCost})">
+              ${c.pointsCost} PTS
             </button>
           </div>
-        `).join('');
-      }
+        </div>
+      `).join('');
+    }
 
-      if (redResp.ok && vouchersContainer) {
-        const myRedemptions = await redResp.json();
-        if (myRedemptions.length === 0) {
-          vouchersContainer.innerHTML = `<div style="padding:12px; color:var(--text-mute); font-size:13px;">No vouchers claimed yet. Redeem one above!</div>`;
+    // 3. Render SECTION C: Point-to-Rupee Price Slash / Buy at Less Price
+    if (priceSlashGrid) {
+      const products = this.getPriceSlashProductsData();
+      priceSlashGrid.innerHTML = products.map((p) => `
+        <div class="price-product-card">
+          <div class="product-rating-chip">★ ${p.rating}</div>
+          <div class="product-img-box">${p.icon}</div>
+          <div class="product-slash-badge">${p.slashText}</div>
+          <div class="product-title-text" title="${p.title}">${p.title}</div>
+          <div class="product-prices-block">
+            <span class="product-original-price">${p.mrp}</span>
+            <div class="product-final-price">${p.finalPrice}</div>
+          </div>
+          <button class="product-buy-btn" onclick="window.appInstance.claimPriceSlashProduct('${p.id}', '${p.title}', ${p.pointsCost}, '${p.finalPrice}')">
+            Redeem &amp; Buy
+          </button>
+        </div>
+      `).join('');
+    }
+
+    // 4. Render SECTION D: Claimed Vouchers & Order Passes
+    if (vouchersContainer) {
+      const localClaimed = JSON.parse(localStorage.getItem('outloot_claimed_vouchers') || '[]');
+      try {
+        const redResp = await fetch('/api/redemptions', { headers: this.getHeaders() });
+        const backendRedemptions = redResp.ok ? await redResp.json() : [];
+        const allVouchers = [
+          ...localClaimed,
+          ...backendRedemptions.map((r) => ({
+            title: r.reward_title,
+            code: r.code,
+            date: 'Claimed'
+          }))
+        ];
+
+        if (allVouchers.length === 0) {
+          vouchersContainer.innerHTML = `<div style="padding:14px; color:var(--text-mute); font-size:12px; background:rgba(255,255,255,0.03); border-radius:8px; border:1px dashed var(--border-subtle); text-align:center;">No vouchers claimed yet. Tap any brand, coupon, or price slash to unlock!</div>`;
         } else {
-          vouchersContainer.innerHTML = myRedemptions.map((red) => `
-            <div style="background:var(--bg-glass-card); border:1px solid var(--border-card); border-radius:var(--radius-md); padding:12px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
+          vouchersContainer.innerHTML = allVouchers.map((v) => `
+            <div class="claimed-voucher-card">
               <div>
-                <strong style="font-size:13px; color:#fff;">${red.reward_title}</strong>
-                <div style="font-size:11px; color:var(--text-mute);">Claimed Voucher Code</div>
+                <strong style="font-size:13px; color:#fff;">${v.title}</strong>
+                <div style="font-size:11px; color:#10b981; font-family:'VCR_OSD_MONO', monospace; margin-top:2px;">CODE: ${v.code}</div>
               </div>
-              <div class="voucher-code-box">${red.code}</div>
+              <button class="voucher-copy-btn" onclick="navigator.clipboard.writeText('${v.code}'); window.appInstance.showToast('📋 Copied: ${v.code}')">
+                Copy Code
+              </button>
             </div>
           `).join('');
         }
+      } catch (err) {
+        console.warn('Error fetching redemptions', err);
       }
-    } catch (e) {
-      console.error(e);
     }
+
+    // Brand Modal Close Button Listener
+    const btnCloseBrand = document.getElementById('btn-close-brand-modal');
+    if (btnCloseBrand) {
+      btnCloseBrand.addEventListener('click', () => {
+        document.getElementById('brand-perks-modal')?.classList.add('hidden');
+      });
+    }
+  }
+
+  openBrandModal(brand) {
+    const modal = document.getElementById('brand-perks-modal');
+    if (!modal) return;
+
+    const logoEl = document.getElementById('brand-modal-logo');
+    const nameEl = document.getElementById('brand-modal-name');
+    const tagEl = document.getElementById('brand-modal-discount-tag');
+    const descEl = document.getElementById('brand-modal-desc');
+    const exchEl = document.getElementById('brand-modal-exchange');
+    const btnAction = document.getElementById('btn-brand-exchange-action');
+
+    if (logoEl) logoEl.textContent = brand.name;
+    if (nameEl) nameEl.textContent = brand.fullName;
+    if (tagEl) tagEl.textContent = brand.offer.toUpperCase();
+    if (descEl) descEl.textContent = brand.perks;
+    if (exchEl) exchEl.textContent = `${brand.pointsCost} Points = ${brand.offer} Code`;
+
+    if (btnAction) {
+      btnAction.textContent = `✦ Exchange ${brand.pointsCost} Pts & Unlock Code`;
+      btnAction.onclick = () => {
+        this.claimBrandPerk(brand);
+        modal.classList.add('hidden');
+      };
+    }
+
+    modal.classList.remove('hidden');
+  }
+
+  async claimBrandPerk(brand) {
+    if (this.dailyRewardsLocked) {
+      alert("⚠️ Daily Reward Claim Locked: You dismissed today's Touch Grass break prompt! Take a 10-minute outdoor walk to restore today's reward claims.");
+      return;
+    }
+
+    if (this.totalPoints < brand.pointsCost) {
+      alert(`❌ Insufficient Points: You have ${this.totalPoints} pts, but ${brand.fullName} requires ${brand.pointsCost} pts. Take a walk to earn more!`);
+      return;
+    }
+
+    // Deduct points
+    this.totalPoints -= brand.pointsCost;
+    const code = `TG-${brand.name.replace(/[^A-Z0-9]/gi, '').toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+
+    const localClaimed = JSON.parse(localStorage.getItem('outloot_claimed_vouchers') || '[]');
+    localClaimed.unshift({
+      title: `${brand.fullName} (${brand.offer})`,
+      code,
+      date: new Date().toLocaleDateString()
+    });
+    localStorage.setItem('outloot_claimed_vouchers', JSON.stringify(localClaimed));
+
+    this.showToast(`🎉 Unlocked ${brand.fullName} ${brand.offer}! Code: ${code}`);
+    cues.playCollectedCue();
+    this.updateUserPointsDisplay();
+    this.loadRewardsScreen();
+  }
+
+  async claimLiveCoupon(couponId, title, pointsCost) {
+    if (this.dailyRewardsLocked) {
+      alert("⚠️ Daily Reward Claim Locked: You dismissed today's Touch Grass break prompt! Take a 10-minute outdoor walk to restore today's reward claims.");
+      return;
+    }
+
+    if (this.totalPoints < pointsCost) {
+      alert(`❌ Insufficient Points: You have ${this.totalPoints} pts, but this voucher requires ${pointsCost} pts. Step outside and touch grass to earn points!`);
+      return;
+    }
+
+    this.totalPoints -= pointsCost;
+    const code = `TG-COUPON-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+
+    const localClaimed = JSON.parse(localStorage.getItem('outloot_claimed_vouchers') || '[]');
+    localClaimed.unshift({
+      title: `${title} Coupon`,
+      code,
+      date: new Date().toLocaleDateString()
+    });
+    localStorage.setItem('outloot_claimed_vouchers', JSON.stringify(localClaimed));
+
+    this.showToast(`🎟 Claimed ${title}! Voucher: ${code}`);
+    cues.playCollectedCue();
+    this.updateUserPointsDisplay();
+    this.loadRewardsScreen();
+  }
+
+  async claimPriceSlashProduct(productId, title, pointsCost, finalPrice) {
+    if (this.dailyRewardsLocked) {
+      alert("⚠️ Daily Reward Claim Locked: You dismissed today's Touch Grass break prompt! Take a 10-minute outdoor walk to restore today's reward claims.");
+      return;
+    }
+
+    if (this.totalPoints < pointsCost) {
+      alert(`❌ Insufficient Points: You have ${this.totalPoints} pts, but this price slash requires ${pointsCost} pts. Go on an outdoor walk to harvest loot points!`);
+      return;
+    }
+
+    this.totalPoints -= pointsCost;
+    const code = `TG-PASS-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+
+    const localClaimed = JSON.parse(localStorage.getItem('outloot_claimed_vouchers') || '[]');
+    localClaimed.unshift({
+      title: `${title} (Slashed to ${finalPrice})`,
+      code,
+      date: new Date().toLocaleDateString()
+    });
+    localStorage.setItem('outloot_claimed_vouchers', JSON.stringify(localClaimed));
+
+    this.showToast(`🛍 Price slashed to ${finalPrice}! Purchase Pass: ${code}`);
+    cues.playCollectedCue();
+    this.updateUserPointsDisplay();
+    this.loadRewardsScreen();
+  }
+
+  updateUserPointsDisplay() {
+    const ptsHeader = document.getElementById('user-points-display');
+    const ptsWallet = document.getElementById('rewards-points-val');
+    if (ptsHeader) ptsHeader.textContent = `${this.totalPoints || 0} pts`;
+    if (ptsWallet) ptsWallet.textContent = `${this.totalPoints || 0} pts`;
   }
 
   async redeemReward(rewardId, cost) {
