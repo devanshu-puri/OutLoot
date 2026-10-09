@@ -45,12 +45,7 @@ export class BottomNavAnimator {
     if (index < 0 || index >= this.tabs.length) return;
     this.currentIndex = index;
     const targetSvgX = 50 + index * 100;
-
-    // Update CSS transform on the floating bubble
-    if (this.bubble) {
-      const pct = 12.5 + index * 25;
-      this.bubble.style.transform = `translateX(calc(${pct}% - 24px))`;
-    }
+    const targetLeftPct = (targetSvgX / 400) * 100; // 12.5%, 37.5%, 62.5%, 87.5%
 
     // Update active tab buttons & bubble icon
     this.tabs.forEach((tab, i) => {
@@ -68,7 +63,7 @@ export class BottomNavAnimator {
               this.bubbleIconSlot.style.transform = 'scale(1)';
               this.bubbleIconSlot.style.opacity = '1';
             }
-          }, 80);
+          }, 60);
         }
       }
     });
@@ -76,10 +71,11 @@ export class BottomNavAnimator {
     if (!animate) {
       this.currentSvgX = targetSvgX;
       if (this.path) this.path.setAttribute('d', this.getBarPath(targetSvgX));
+      if (this.bubble) this.bubble.style.left = `${targetLeftPct.toFixed(2)}%`;
       return;
     }
 
-    // Animate SVG path scoop smoothly using easeOutBack
+    // Animate SVG path scoop and floating bubble simultaneously in 100% lockstep
     if (this.animId) cancelAnimationFrame(this.animId);
     const startX = this.currentSvgX;
     const startTime = performance.now();
@@ -101,6 +97,9 @@ export class BottomNavAnimator {
       if (this.path) {
         this.path.setAttribute('d', this.getBarPath(currentX));
       }
+      if (this.bubble) {
+        this.bubble.style.left = `${((currentX / 400) * 100).toFixed(2)}%`;
+      }
 
       if (progress < 1) {
         this.animId = requestAnimationFrame(step);
@@ -108,6 +107,9 @@ export class BottomNavAnimator {
         this.currentSvgX = targetSvgX;
         if (this.path) {
           this.path.setAttribute('d', this.getBarPath(targetSvgX));
+        }
+        if (this.bubble) {
+          this.bubble.style.left = `${targetLeftPct.toFixed(2)}%`;
         }
       }
     };
