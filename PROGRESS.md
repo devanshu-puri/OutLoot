@@ -97,6 +97,7 @@
 - [x] T7.7 Animated curved bottom navigation bar with scooped notch cutout & floating green bubble transition (Figma component pattern) — implemented & verified (2026-10-10 01:46)
 - [x] T7.8 Floating active bubble & scoop alignment fix (locked at 60 FPS in nav.js) + eliminated duplicate background navbar collisions — verified in browser & pushed (2026-10-10 02:04)
 - [x] T7.9 Clean wireframe layout redesign matching user Image 3: top header notch with live status/pause/end actions, right floating controls (theme & GPS), elevated HUD dial, compact Start/SIM Walk buttons, and flush bottom navbar docking to eliminate background bleed — implemented & verified (2026-10-10 02:19)
+- [x] T7.10 OutLoot branding update, SIM symbol toggle with #1bc06b active state, right-side controls alignment below HUD, bottom-docked active walk notch (8px gap above navbar), and 100dvh mobile fit with zero vertical overflow — implemented & verified (2026-10-10 02:30)
 
 ## MANUAL E2E CHECKLIST (sim mode)
 - [ ] Start session → HUD shows ACTIVE · [ ] sim walk advances progress ring · [ ] stationary stretch pauses ring
