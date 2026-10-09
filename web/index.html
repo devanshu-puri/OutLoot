@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
   <link rel="stylesheet" href="/style.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="/assets/lottie.min.js"></script>
 </head>
 <body>
   <div id="app-container">
@@ -77,21 +78,30 @@
       <div class="map-screen-wrapper">
         <div id="map"></div>
 
-        <!-- Floating Open-Source Map Controls Top Bar -->
+        <!-- Floating Map Controls Top Bar -->
         <div class="map-top-bar">
-          <div class="map-provider-pills">
-            <button class="map-pill-btn active" data-style="dark" title="Free Dark Matter style">🌙 Dark</button>
-            <button class="map-pill-btn" data-style="osm" title="Free 100% OpenStreetMap Standard">🗺️ OSM</button>
-            <button class="map-pill-btn" data-style="voyager" title="Free Outdoor Voyager style">🌲 Trails</button>
+          <!-- One circle at top left: Moon in dark mode, Sun in light mode -->
+          <button id="btn-theme-toggle" class="map-circle-btn" title="Toggle Dark/Light Mode">
+            <span id="theme-toggle-icon">🌙</span>
+          </button>
+
+          <!-- Top-Center Active Walk Status Chip -->
+          <div id="hud-status-pill" class="hud-pill-chip hidden">
+            <div id="hud-status-indicator" class="status-dot-active"></div>
+            <span id="hud-status-text">ACTIVE WALK</span>
           </div>
-          <button id="btn-locate-me" class="map-locate-btn" title="Center map on my location">📍</button>
+
+          <!-- Top-Right Locate Me Circle -->
+          <button id="btn-locate-me" class="map-circle-btn" title="Center map on my location">
+            <span>📍</span>
+          </button>
         </div>
 
         <!-- IDLE STATE: Floating Glass Card when not currently walking -->
         <div id="idle-walk-card" class="idle-walk-glass-card">
           <div style="display:flex; justify-content:space-between; align-items:center;">
             <span class="hero-pill-badge">🌱 Live Open-Source Map</span>
-            <span id="map-coords-indicator" style="font-size:11px; color:var(--text-faint); font-family:'JetBrains Mono',monospace;">GPS Ready</span>
+            <span id="map-coords-indicator" style="font-size:11px; color:var(--text-faint);">GPS Ready</span>
           </div>
           <h2 style="font-size:20px; font-weight:800; color:#fff; margin-top:2px;">Step Outside &amp; Touch Grass</h2>
           <p style="font-size:13px; color:var(--text-mute); line-height:1.45;">
@@ -107,33 +117,26 @@
           </div>
         </div>
 
-        <!-- ACTIVE WALK: HUD Top Status & One-Glance Dial -->
+        <!-- ACTIVE WALK: HUD Single-Bar Alignment | Timer | Next Item Drop | Walk Animation | -->
         <div id="hud-overlay" class="hud-overlay hidden">
-          <div class="hud-pill-chip">
-            <div id="hud-status-indicator" class="status-dot-active"></div>
-            <span id="hud-status-text" style="font-size:12px; font-weight:700; color:#fff; letter-spacing:0.5px;">ACTIVE WALK</span>
-          </div>
-
-          <!-- Glass Center One-Glance Dial -->
           <div class="glass-hud-dial">
+            <!-- 1. Timer: Dotted clock circle dial -->
             <div class="progress-dial-wrapper">
-              <svg class="progress-dial-svg">
-                <circle class="dial-track" cx="38" cy="38" r="35" />
-                <circle id="ring-progress-bar" class="dial-progress" cx="38" cy="38" r="35" />
-              </svg>
+              <svg id="dial-dots-svg" class="dotted-dial-svg" viewBox="0 0 84 84"></svg>
               <div class="dial-center-text">
-                <span id="hud-countdown-text">0:20</span>
+                <span id="hud-countdown-text">5:00</span>
               </div>
             </div>
 
+            <!-- 2. Next Item Drop Details -->
             <div class="hud-details">
               <h3 id="hud-headline-text">Next Item Drop</h3>
-              <p id="hud-subtext-text">Keep a steady pedestrian cadence</p>
+              <p id="hud-subtext-text">0m walked so far</p>
             </div>
-          </div>
 
-          <!-- AI Mission Card on HUD -->
-          <div id="active-mission-card-container"></div>
+            <!-- 3. Walk Animation: Walking Shoes (walk cycling shoes.json) -->
+            <div id="walk-lottie-container" class="walk-lottie-box" title="Cadence active"></div>
+          </div>
         </div>
 
         <!-- Walk Mode Dimmer (Battery Saving) -->

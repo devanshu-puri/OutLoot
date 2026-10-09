@@ -73,14 +73,18 @@ class App {
       );
     }
 
-    // Setup Open-Source Map Provider Pills (Dark / OSM / Trails)
-    document.querySelectorAll('.map-pill-btn').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.map-pill-btn').forEach((b) => b.classList.remove('active'));
-        btn.classList.add('active');
-        this.mapCtrl.setTileProvider(btn.dataset.style);
+    // Setup Single Circular Theme Toggle Button (Moonlight <-> Sun)
+    const btnTheme = document.getElementById('btn-theme-toggle');
+    const themeIcon = document.getElementById('theme-toggle-icon');
+    if (btnTheme) {
+      btnTheme.addEventListener('click', () => {
+        const nextStyle = this.mapCtrl.toggleTheme();
+        if (themeIcon) {
+          themeIcon.textContent = nextStyle === 'dark' ? '🌙' : '☀️';
+        }
+        btnTheme.setAttribute('title', nextStyle === 'dark' ? 'Switch to Light OSM Mode' : 'Switch to Dark Mode');
       });
-    });
+    }
 
     // Locate Me Button
     const btnLocate = document.getElementById('btn-locate-me');
@@ -173,10 +177,12 @@ class App {
     const idleCard = document.getElementById('idle-walk-card');
     const hudOverlay = document.getElementById('hud-overlay');
     const activeControls = document.getElementById('active-walk-controls');
+    const hudStatusPill = document.getElementById('hud-status-pill');
 
     if (idleCard) idleCard.classList.toggle('hidden', isActive);
     if (hudOverlay) hudOverlay.classList.toggle('hidden', !isActive);
     if (activeControls) activeControls.classList.toggle('hidden', !isActive);
+    if (hudStatusPill) hudStatusPill.classList.toggle('hidden', !isActive);
   }
 
   async ensureAuth() {

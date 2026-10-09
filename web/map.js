@@ -109,6 +109,12 @@ export class MapController {
     this.currentTileLayer.addTo(this.map);
   }
 
+  toggleTheme() {
+    const nextStyle = this.currentStyle === 'dark' ? 'osm' : 'dark';
+    this.setTileProvider(nextStyle);
+    return nextStyle;
+  }
+
   updateUserPosition(lat, lon, accuracy_m = 5.0) {
     if (!this.map) this.init(lat, lon);
 
