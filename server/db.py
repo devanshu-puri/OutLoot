@@ -21,7 +21,8 @@ def create_connection(db_path: Optional[Path] = None) -> sqlite3.Connection:
     conn = sqlite3.connect(
         str(db_path),
         timeout=30.0,
-        check_same_thread=False
+        check_same_thread=False,
+        autocommit=True
     )
     conn.row_factory = sqlite3.Row
     # Configure SQLite for robust concurrent reads & writes
@@ -45,13 +46,21 @@ def tx(conn: sqlite3.Connection) -> Generator[sqlite3.Connection, None, None]:
     """
     Context manager for atomic database transactions using BEGIN IMMEDIATE.
     Acquires write lock immediately to prevent deadlocks and races.
+    Handles nested transactions safely.
     """
-    conn.execute("BEGIN IMMEDIATE;")
+    is_outer = not conn.in_transaction
+    if is_outer:
+        conn.execute("BEGIN IMMEDIATE;")
     try:
         yield conn
-        conn.commit()
+        if is_outer:
+            conn.execute("COMMIT;")
     except Exception:
-        conn.rollback()
+        if is_outer:
+            try:
+                conn.execute("ROLLBACK;")
+            except Exception:
+                pass
         raise
 
 
@@ -63,11 +72,10 @@ def run_migrations(conn: sqlite3.Connection, migrations_dir: Optional[Path] = No
         return
 
     sql_files = sorted(migrations_dir.glob("*.sql"))
-    with tx(conn):
-        for sql_file in sql_files:
-            with open(sql_file, "r", encoding="utf-8") as f:
-                script = f.read()
-                conn.executescript(script)
+    for sql_file in sql_files:
+        with open(sql_file, "r", encoding="utf-8") as f:
+            script = f.read()
+            conn.executescript(script)
 
 
 def init_db(db_path: Optional[Path] = None) -> None:

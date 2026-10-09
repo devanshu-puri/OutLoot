@@ -149,3 +149,198 @@ def check_and_unlock_items(
             )
 
     return None
+
+
+def collect_item(
+    conn: sqlite3.Connection,
+    session_id: str,
+    user_id: str,
+    spawn_id: str,
+    user_lat: float,
+    user_lon: float,
+    accuracy_m: float,
+    idempotency_key: str
+) -> CollectResp:
+    from server.services.points import add_point_transaction, get_points_balance
+    settings = get_settings()
+    cfg = settings.game_config
+
+    with tx(conn):
+        # 1. Check idempotency replay
+        existing_col = conn.execute(
+            "SELECT * FROM collections WHERE idempotency_key = ?;",
+            (idempotency_key,)
+        ).fetchone()
+
+        if existing_col:
+            current_balance = get_points_balance(conn, user_id)
+            return CollectResp(
+                result="REPLAY",
+                reason_code="REPLAY",
+                points_awarded=int(existing_col["points"]),
+                new_balance=current_balance,
+                cycle_progress_s=0.0,
+                message="Collection replayed from previous submission"
+            )
+
+        # 2. Check session state
+        session_row = conn.execute(
+            "SELECT * FROM sessions WHERE id = ? AND user_id = ?;",
+            (session_id, user_id)
+        ).fetchone()
+
+        if not session_row or session_row["state"] != "ACTIVE":
+            curr_bal = get_points_balance(conn, user_id)
+            return CollectResp(
+                result="REJECTED",
+                reason_code="NOT_ACTIVE",
+                points_awarded=0,
+                new_balance=curr_bal,
+                cycle_progress_s=float(session_row["cycle_progress_s"] if session_row else 0.0),
+                message="Session is not currently active"
+            )
+
+        # 3. Check session limits
+        counts = conn.execute(
+            """
+            SELECT COUNT(*) AS total_cols, COALESCE(SUM(points), 0) AS total_pts
+            FROM collections
+            WHERE session_id = ? AND result = 'SUCCESS';
+            """,
+            (session_id,)
+        ).fetchone()
+        if counts["total_cols"] >= cfg.limits.max_collections_per_session or counts["total_pts"] >= cfg.limits.max_points_per_session:
+            curr_bal = get_points_balance(conn, user_id)
+            return CollectResp(
+                result="REJECTED",
+                reason_code="SESSION_LIMIT",
+                points_awarded=0,
+                new_balance=curr_bal,
+                cycle_progress_s=float(session_row["cycle_progress_s"]),
+                message="Session collection limit reached"
+            )
+
+        # 4. Check accuracy
+        if accuracy_m > cfg.movement.max_accuracy_m:
+            curr_bal = get_points_balance(conn, user_id)
+            return CollectResp(
+                result="REJECTED",
+                reason_code="LOW_ACCURACY",
+                points_awarded=0,
+                new_balance=curr_bal,
+                cycle_progress_s=float(session_row["cycle_progress_s"]),
+                message=f"GPS accuracy ({accuracy_m:.1f}m) too low to verify collection proximity"
+            )
+
+        # 5. Check item existence & availability
+        item_row = conn.execute(
+            """
+            SELECT si.*, idf.name, idf.rarity, idf.category, idf.base_points
+            FROM spawned_items si
+            JOIN item_definitions idf ON si.item_id = idf.id
+            WHERE si.id = ? AND si.session_id = ?;
+            """,
+            (spawn_id, session_id)
+        ).fetchone()
+
+        if not item_row:
+            curr_bal = get_points_balance(conn, user_id)
+            return CollectResp(
+                result="REJECTED",
+                reason_code="ITEM_NOT_AVAILABLE",
+                points_awarded=0,
+                new_balance=curr_bal,
+                cycle_progress_s=float(session_row["cycle_progress_s"]),
+                message="Spawned item not found for this session"
+            )
+
+        if item_row["status"] == "COLLECTED":
+            curr_bal = get_points_balance(conn, user_id)
+            return CollectResp(
+                result="REJECTED",
+                reason_code="ALREADY_COLLECTED",
+                points_awarded=0,
+                new_balance=curr_bal,
+                cycle_progress_s=float(session_row["cycle_progress_s"]),
+                message="Item has already been collected"
+            )
+
+        if item_row["status"] != "AVAILABLE":
+            curr_bal = get_points_balance(conn, user_id)
+            return CollectResp(
+                result="REJECTED",
+                reason_code="ITEM_NOT_AVAILABLE",
+                points_awarded=0,
+                new_balance=curr_bal,
+                cycle_progress_s=float(session_row["cycle_progress_s"]),
+                message="Item is still locked. Walk further to unlock it!"
+            )
+
+        # 6. Check Proximity
+        dist_m = haversine_m(user_lat, user_lon, item_row["lat"], item_row["lon"])
+        allowed_radius = cfg.spawn.collect_radius_m + min(accuracy_m, 15.0)
+
+        if dist_m > allowed_radius:
+            curr_bal = get_points_balance(conn, user_id)
+            return CollectResp(
+                result="REJECTED",
+                reason_code="OUT_OF_RANGE",
+                points_awarded=0,
+                new_balance=curr_bal,
+                cycle_progress_s=float(session_row["cycle_progress_s"]),
+                message=f"Item is {int(dist_m)}m away (must be within {int(allowed_radius)}m)"
+            )
+
+        # 7. Collect Success: Update item, insert collection record, add ledger points
+        points_to_award = int(item_row["base_points"])
+        conn.execute(
+            "UPDATE spawned_items SET status = 'COLLECTED', collected_at = CURRENT_TIMESTAMP WHERE id = ?;",
+            (spawn_id,)
+        )
+
+        col_id = f"col_{secrets.token_hex(8)}"
+        conn.execute(
+            """
+            INSERT INTO collections (id, session_id, spawn_id, user_id, idempotency_key, result, reason_code, points)
+            VALUES (?, ?, ?, ?, ?, 'SUCCESS', 'OK', ?);
+            """,
+            (col_id, session_id, spawn_id, user_id, idempotency_key, points_to_award)
+        )
+
+        add_point_transaction(
+            conn=conn,
+            user_id=user_id,
+            delta=points_to_award,
+            kind="COLLECT_ITEM",
+            ref_type="spawn",
+            ref_id=spawn_id,
+            note=f"Collected {item_row['name']} ({item_row['rarity']})"
+        )
+
+        # Reset session cycle progress and update origin to collection location
+        conn.execute(
+            """
+            UPDATE sessions
+            SET cycle_progress_s = 0.0,
+                cycle_start_lat = ?,
+                cycle_start_lon = ?
+            WHERE id = ?;
+            """,
+            (user_lat, user_lon, session_id)
+        )
+
+        # Pre-spawn next locked item from this location
+        spawn_next_item(conn, session_id, user_lat, user_lon)
+
+        new_balance = get_points_balance(conn, user_id)
+
+        return CollectResp(
+            result="SUCCESS",
+            reason_code="OK",
+            points_awarded=points_to_award,
+            new_balance=new_balance,
+            cycle_progress_s=0.0,
+            message=f"Successfully collected {item_row['name']}! (+{points_to_award} points)",
+            item_name=str(item_row["name"]),
+            rarity=str(item_row["rarity"])
+        )
