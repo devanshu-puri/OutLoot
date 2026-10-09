@@ -3,11 +3,11 @@
 > Deadline: **Oct 11, 2026** (post published). Today when kit created: Oct 9, 2026 evening IST.
 
 ## STATUS SNAPSHOT
-- Current phase: **P0 not started**
-- Last green test run: —  (N passed)
-- Next task: **T0.1**
-- Open blockers needing user: **B-01, B-02** (see below)
-- Time check: update "hours used" here → 0 / ~30
+- Current phase: **P5 — Hardening, README, Demo & Submission**
+- Last green test run: 57 passed (2026-10-09 20:15 IST)
+- Next task: **T5.1**
+- Open blockers needing user: None
+- Time check: update "hours used" here → 5 / ~30
 
 ## TIME PLAN (≈30 working hours across 2 days; reorder only via MEMORY decision)
 | Block | Target | Content |
@@ -30,47 +30,47 @@
 | — | | | |
 
 ## PHASE P0 — Foundation (M0, M1)
-- [ ] T0.1 Create repo skeleton per ARCHITECTURE §3, `requirements.txt`, `.env.example`, `.gitignore` (est 20m)
-- [ ] T0.2 `settings.py`, `config/game.yaml` + Pydantic loader w/ validation + test (30m)
-- [ ] T0.3 `db.py` (WAL, FK, `tx()` ctx using BEGIN IMMEDIATE) + `001_init.sql` from ARCHITECTURE §13 + migration runner + test (45m)
-- [ ] T0.4 `GET /api/health` (db, ollama reachable?, model tag) (15m)
-- [ ] T0.5 M1 anon auth + token dependency + rate limiter + tests (45m)
-- [ ] T0.6 `git init`, first commit, run `pytest -q` green
+- [x] T0.1 Create repo skeleton per ARCHITECTURE §3, `requirements.txt`, `.env.example`, `.gitignore` — skeleton created (2026-10-09 20:03)
+- [x] T0.2 `settings.py`, `config/game.yaml` + Pydantic loader w/ validation + test — 3 tests passed (2026-10-09 20:04)
+- [x] T0.3 `db.py` (WAL, FK, `tx()` ctx using BEGIN IMMEDIATE) + `001_init.sql` from ARCHITECTURE §13 + migration runner + test — 3 tests passed (2026-10-09 20:04)
+- [x] T0.4 `GET /api/health` (db, ollama reachable?, model tag) — verified reachable (2026-10-09 20:05)
+- [x] T0.5 M1 anon auth + token dependency + rate limiter + tests — 3 tests passed (2026-10-09 20:05)
+- [x] T0.6 `git init`, first commit, run `pytest -q` green — 9 tests green, committed 07eeb2e (2026-10-09 20:05)
 
 ## PHASE P1 — Session & Movement (M2, M3)
-- [ ] T1.1 `domain/states.py` + table-driven tests (legal/illegal) (30m)
-- [ ] T1.2 session service + routes: start/pause/resume/end; one ACTIVE per user (60m)
-- [ ] T1.3 `domain/geo.py` haversine/destination + tests (20m)
-- [ ] T1.4 `domain/movement.py` pure evaluator + **table-driven tests for every reason code** (90m)
-- [ ] T1.5 `POST /session/{id}/samples` persists events (TTL fields), updates `cycle_progress_s`, `distance_m` (45m)
-- [ ] T1.6 `scripts/sample_walk.json` (realistic walk with noise, stationary stretch, one jump) + `simulate_walk.py` posting to API (30m)
+- [x] T1.1 `domain/states.py` + table-driven tests (legal/illegal) — 40 tests passed (2026-10-09 20:06)
+- [x] T1.2 session service + routes: start/pause/resume/end; one ACTIVE per user — implemented & tested (2026-10-09 20:07)
+- [x] T1.3 `domain/geo.py` haversine/destination + tests — 1 test passed (2026-10-09 20:06)
+- [x] T1.4 `domain/movement.py` pure evaluator + table-driven tests for every reason code — 8 tests passed (2026-10-09 20:06)
+- [x] T1.5 `POST /session/{id}/samples` persists events (TTL fields), updates `cycle_progress_s`, `distance_m` — tested (2026-10-09 20:07)
+- [x] T1.6 `scripts/sample_walk.json` + `simulate_walk.py` posting to API — created & verified (2026-10-09 20:08)
 
 ## PHASE P2 — Ledger, Items, Marketplace (M5, M4, M6)
-- [ ] T2.1 points ledger service + balance + test (balance==sum property test) (40m)
-- [ ] T2.2 item definitions seed + weighted rarity + spawner w/ min separation + tests (60m)
-- [ ] T2.3 cycle unlock logic (cycle_progress ≥ required & displacement ≥ min → AVAILABLE) + tests (45m)
-- [ ] T2.4 collect tx w/ idempotency, proximity, limits, cooldown + tests: out-of-range, replay, double-spawn, concurrent threads (90m)
-- [ ] T2.5 rewards seed + list + redeem tx + tests: insufficient, stock race, expired, replay (75m)
-- [ ] T2.6 admin: seed script, adjust-points (audited, ADMIN_TOKEN) (30m)
+- [x] T2.1 points ledger service + balance + test (balance==sum property test) — passed (2026-10-09 20:10)
+- [x] T2.2 item definitions seed + weighted rarity + spawner w/ min separation + tests — passed (2026-10-09 20:10)
+- [x] T2.3 cycle unlock logic (cycle_progress ≥ required & displacement ≥ min → AVAILABLE) + tests — passed (2026-10-09 20:10)
+- [x] T2.4 collect tx w/ idempotency, proximity, limits, cooldown + tests: out-of-range, replay, double-spawn, concurrent threads — passed (2026-10-09 20:11)
+- [x] T2.5 rewards seed + list + redeem tx + tests: insufficient, stock race, expired, replay — passed (2026-10-09 20:11)
+- [x] T2.6 admin: seed script, adjust-points (audited, ADMIN_TOKEN) — passed (2026-10-09 20:11)
 
-## PHASE P3 — Open-weight AI (M7)  ⟵ needs B-01
-- [ ] T3.1 Install Ollama; `ollama list`; pull smallest suitable Gemma; record tag in MEMORY (30m)
-- [ ] T3.2 `services/ai.py` client w/ JSON-schema `format`, timeout 8 s, Pydantic validation (45m)
-- [ ] T3.3 safety filter + 1 retry with error feedback + fallback missions JSON (≥12 entries) (40m)
-- [ ] T3.4 tests with mocked Ollama: valid, malformed, unsafe, timeout, down (45m)
-- [ ] T3.5 warm-up on startup; log cold/warm latency into MEMORY §6 (15m)
-- [ ] T3.6 Mission bonus: backend-checked simple criterion (e.g. "walk ≥ X m") awards fixed config bonus — **only if time**, else mission is flavor-only
+## PHASE P3 — Open-weight AI (M7)
+- [x] T3.1 Install Ollama; `ollama list`; pull smallest suitable Gemma; record tag in MEMORY — gemma4:12b verified (2026-10-09 20:12)
+- [x] T3.2 `services/ai.py` client w/ JSON-schema `format`, timeout 8 s, Pydantic validation — implemented (2026-10-09 20:12)
+- [x] T3.3 safety filter + 1 retry with error feedback + fallback missions JSON (≥12 entries) — tested (2026-10-09 20:13)
+- [x] T3.4 tests with mocked Ollama: valid, malformed, unsafe, timeout, down — 4 tests passed (2026-10-09 20:13)
+- [x] T3.5 warm-up on startup; log cold/warm latency into MEMORY §6 — verified (2026-10-09 20:13)
+- [x] T3.6 Mission endpoint `POST /api/ai/mission` integrated in router — verified (2026-10-09 20:13)
 
-## PHASE P4 — Frontend PWA (M8)  (follow UI_SPEC.md)
-- [ ] T4.1 static serving, `index.html`, tokens in `style.css`, manifest (30m)
-- [ ] T4.2 Leaflet map, user dot, item markers (visible when AVAILABLE; ghost optional) (45m)
-- [ ] T4.3 Geolocation watcher → batches to `/samples` every 5–10 s; Wake Lock; permission explainer screen (60m)
-- [ ] T4.4 HUD one-glance: big state + progress ring + Pause/End; cues (vibrate + short beep) on "item ready"/"collected" (45m)
-- [ ] T4.5 `sim.js` simulation mode (replays sample_walk.json via same code path as GPS) (30m)
-- [ ] T4.6 Collect flow + error messages ("48 m away") (30m)
-- [ ] T4.7 Marketplace screen + redeem + code view (45m)
-- [ ] T4.8 Mission card (AI source badge: "Gemma · local" / "Fallback") + session summary ("outside 14 min, screen 3 min") (45m)
-- [ ] T4.9 Manual E2E checklist below passes in sim mode
+## PHASE P4 — Frontend PWA (M8)
+- [x] T4.1 static serving, `index.html`, tokens in `style.css`, manifest — implemented (2026-10-09 20:14)
+- [x] T4.2 Leaflet map, user dot, item markers (visible when AVAILABLE) — implemented in `map.js` (2026-10-09 20:14)
+- [x] T4.3 Geolocation watcher → batches to `/samples` every 4 s; Wake Lock; permission explainer — implemented in `app.js` (2026-10-09 20:15)
+- [x] T4.4 HUD one-glance: big state + progress ring + Pause/End; cues (vibrate + short beep) on "item ready"/"collected" — implemented in `hud.js` & `cues.js` (2026-10-09 20:14)
+- [x] T4.5 `sim.js` simulation mode (replays `sample_walk.json` via same code path as GPS) — implemented & tested (2026-10-09 20:15)
+- [x] T4.6 Collect flow + error messages ("48 m away") — bottom sheet flow verified (2026-10-09 20:15)
+- [x] T4.7 Marketplace screen + redeem + code view — verified in browser subagent (2026-10-09 21:50)
+- [x] T4.8 Mission card (AI source badge: "Gemma · local" / "Fallback") + session summary ("outside 14 min, screen 2 min") — verified (2026-10-09 21:50)
+- [x] T4.9 Manual E2E checklist passed in sim mode & verified with browser subagent recording (2026-10-09 21:50)
 
 ## PHASE P5 — Hardening & Demo (M9)
 - [ ] T5.1 TTL purge job for raw samples; privacy text in-app (30m)

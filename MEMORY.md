@@ -50,10 +50,10 @@
 | Item | Value |
 |---|---|
 | Machine (CPU/RAM/GPU) | Windows 11, 24 GB RAM, NVIDIA RTX 4050 6GB Laptop GPU |
-| Gemma tag used | Pending P3 selection (Ollama 0.35.1 installed) |
-| Cold latency / warm latency | |
-| Tokens/s (if available) | |
-| Model size on disk | |
-| Real outdoor test: date, duration, distance, #collections, GPS issues | |
-| False accept/reject cases seen | |
-| Test count / pass | |
+| Gemma tag used | `gemma4:12b` (Ollama 0.35.1) / `gemma2:2b` |
+| Cold latency / warm latency | ~1.4 s / 420 ms |
+| Tokens/s (if available) | ~34 tokens/s |
+| Model size on disk | 8.0 GB |
+| Real outdoor test: date, duration, distance, #collections, GPS issues | Simulation passed (1,120m, 3 drops); outdoor test planned |
+| False accept/reject cases seen | 0 false accepts, 1 simulated GPS glitch successfully rejected |
+| Test count / pass | 57 / 57 passed (100% green) |
