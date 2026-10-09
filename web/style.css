@@ -382,6 +382,15 @@ body {
   z-index: 1;
 }
 
+/* 100% Free Open-Source Dark Map Filter (Pure OSM, Zero API Keys, Zero Watermarks) */
+.map-dark-tiles .leaflet-tile-pane {
+  filter: invert(100%) hue-rotate(180deg) brightness(82%) contrast(108%);
+}
+
+.map-dark-tiles .leaflet-container {
+  background: #0a0815;
+}
+
 /* Floating Map Controls Top Bar */
 .map-top-bar {
   position: absolute;

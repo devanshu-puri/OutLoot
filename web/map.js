@@ -15,42 +15,33 @@ export class MapController {
     this.currentStyle = 'dark';
     this.hasCentered = false;
 
-    // Free Open-Source Tile Providers (No API Key Required)
+    // 100% Free Public Open-Source Map Providers — NO API KEY EVER REQUIRED & NO WATERMARKS
     this.tileProviders = {
       dark: {
-        name: 'Dark Matter',
-        url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+        name: 'Dark (OSM)',
+        url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
         options: {
           maxZoom: 19,
-          subdomains: 'abcd',
-          attribution: '&copy; <a href="https://openstreetmap.org" target="_blank">OSM</a> &copy; <a href="https://carto.com" target="_blank">CARTO</a>'
+          subdomains: 'abc',
+          attribution: '&copy; <a href="https://openstreetmap.org" target="_blank">OpenStreetMap</a>'
         }
       },
       osm: {
-        name: 'OpenStreetMap',
-        url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+        name: 'OpenStreetMap Standard',
+        url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
         options: {
           maxZoom: 19,
           subdomains: 'abc',
-          attribution: '&copy; <a href="https://openstreetmap.org" target="_blank">OpenStreetMap</a> contributors'
+          attribution: '&copy; <a href="https://openstreetmap.org" target="_blank">OpenStreetMap</a>'
         }
       },
       voyager: {
-        name: 'Outdoor Voyager',
-        url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+        name: 'Nature & Walking Trails',
+        url: 'https://{s}.tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png',
         options: {
           maxZoom: 19,
-          subdomains: 'abcd',
-          attribution: '&copy; <a href="https://openstreetmap.org" target="_blank">OSM</a> &copy; <a href="https://carto.com" target="_blank">CARTO</a>'
-        }
-      },
-      topo: {
-        name: 'OpenTopoMap',
-        url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
-        options: {
-          maxZoom: 17,
           subdomains: 'abc',
-          attribution: '&copy; <a href="https://opentopomap.org" target="_blank">OpenTopoMap</a> &copy; <a href="https://openstreetmap.org" target="_blank">OSM</a>'
+          attribution: '&copy; <a href="https://openstreetmap.org" target="_blank">OpenStreetMap</a> | CyclOSM'
         }
       }
     };
@@ -74,7 +65,7 @@ export class MapController {
       // Add Zoom Control at bottom right
       L.control.zoom({ position: 'bottomright' }).addTo(this.map);
 
-      // Set initial tile layer (Carto Dark Matter by default)
+      // Set initial tile layer (Watermark-free Dark OSM by default)
       this.setTileProvider(this.currentStyle);
 
       // Minimal attribution control
@@ -98,23 +89,23 @@ export class MapController {
 
   setTileProvider(styleKey) {
     if (!this.map) return;
-    const provider = this.tileProviders[styleKey] || this.tileProviders.osm;
+    const provider = this.tileProviders[styleKey] || this.tileProviders.dark;
     this.currentStyle = styleKey;
+
+    const mapContainer = document.getElementById(this.elementId);
+    if (mapContainer) {
+      if (styleKey === 'dark') {
+        mapContainer.classList.add('map-dark-tiles');
+      } else {
+        mapContainer.classList.remove('map-dark-tiles');
+      }
+    }
 
     if (this.currentTileLayer) {
       this.map.removeLayer(this.currentTileLayer);
     }
 
     this.currentTileLayer = L.tileLayer(provider.url, provider.options);
-    
-    // Automatic fallback to OpenStreetMap standard if tile fails
-    this.currentTileLayer.on('tileerror', () => {
-      if (this.currentStyle !== 'osm') {
-        console.warn(`Tile provider '${this.currentStyle}' error, falling back to OpenStreetMap`);
-        this.setTileProvider('osm');
-      }
-    });
-
     this.currentTileLayer.addTo(this.map);
   }
 
