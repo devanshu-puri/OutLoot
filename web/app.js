@@ -53,14 +53,7 @@ class App {
 
     // Initialize map immediately on startup so user always sees the live map
     this.mapCtrl.init();
-
-    // Initialize HUD in ready state on map load
-    this.hudCtrl.update({
-      state: 'READY',
-      cycle_progress_s: 0,
-      cycle_required_s: 300,
-      distance_m: 0
-    });
+    this.setMapActiveMode(false);
 
     // Try fetching immediate GPS position for user pin
     if ('geolocation' in navigator) {
@@ -123,22 +116,6 @@ class App {
       startWalkMap.addEventListener('click', () => this.startSessionFlow());
     }
 
-    const simWalkMap = document.getElementById('btn-sim-walk-map');
-    if (simWalkMap) {
-      simWalkMap.addEventListener('click', () => {
-        const running = this.simCtrl.toggle();
-        simWalkMap.textContent = running ? '⚡ SIM ON' : '⚡ SIM Walk';
-        const topSimBtn = document.getElementById('sim-toggle-btn');
-        if (topSimBtn) {
-          topSimBtn.classList.toggle('active', running);
-          topSimBtn.title = running ? '⚡ SIM ON (Active)' : 'Toggle SIM Mode (⚡)';
-        }
-        if (running && !this.currentSession) {
-          this.startSessionFlow();
-        }
-      });
-    }
-
     // Setup simulator toggle in header
     const simBtn = document.getElementById('sim-toggle-btn');
     if (simBtn) {
@@ -197,7 +174,7 @@ class App {
   }
 
   setMapActiveMode(isActive) {
-    const idleCard = document.getElementById('idle-walk-card');
+    const startBtn = document.getElementById('btn-start-walk-map');
     const hudOverlay = document.getElementById('hud-overlay');
     const hudStatusPill = document.getElementById('hud-status-pill');
     const hudStatusText = document.getElementById('hud-status-text');
@@ -205,16 +182,28 @@ class App {
     const btnPause = document.getElementById('btn-pause-walk');
     const btnEnd = document.getElementById('btn-end-walk');
 
-    if (idleCard) idleCard.classList.toggle('hidden', isActive);
-    if (hudStatusPill) hudStatusPill.classList.remove('hidden');
-    if (hudOverlay) hudOverlay.classList.remove('hidden');
-    if (hudStatusText) hudStatusText.textContent = isActive ? 'ACTIVE WALK' : 'ACTIVE WALK';
-    if (hudStatusDot) hudStatusDot.classList.remove('paused');
-    if (btnPause) {
-      btnPause.classList.remove('hidden');
-      btnPause.textContent = '⏸';
+    if (startBtn) {
+      startBtn.classList.toggle('hidden', isActive);
+      startBtn.style.display = isActive ? 'none' : 'flex';
     }
-    if (btnEnd) btnEnd.classList.remove('hidden');
+    if (hudStatusPill) {
+      hudStatusPill.classList.toggle('active', isActive);
+      hudStatusPill.classList.toggle('hidden', !isActive);
+      hudStatusPill.style.display = isActive ? 'flex' : 'none';
+    }
+    if (hudOverlay) {
+      hudOverlay.classList.toggle('hidden', !isActive);
+      hudOverlay.style.display = isActive ? 'flex' : 'none';
+    }
+    if (isActive) {
+      if (hudStatusText) hudStatusText.textContent = 'ACTIVE WALK';
+      if (hudStatusDot) hudStatusDot.classList.remove('paused');
+      if (btnPause) {
+        btnPause.textContent = '⏸';
+        btnPause.title = 'Pause Walk';
+      }
+      if (btnEnd) btnEnd.title = 'Cancel or End Walk';
+    }
   }
 
   async ensureAuth() {
@@ -683,6 +672,22 @@ class App {
     const isPaused = this.currentSession.state === 'PAUSED';
     const action = isPaused ? 'resume' : 'pause';
 
+    if (this.currentSession.id && this.currentSession.id.startsWith('ses_local_')) {
+      this.currentSession.state = isPaused ? 'ACTIVE' : 'PAUSED';
+      this.hudCtrl.update(this.currentSession, this.isItemAvailable);
+      const isNowPaused = this.currentSession.state === 'PAUSED';
+      const hudStatusDot = document.getElementById('hud-status-indicator');
+      const hudStatusText = document.getElementById('hud-status-text');
+      const hudHeadline = document.getElementById('hud-headline-text');
+      const btn = document.getElementById('btn-pause-walk');
+
+      if (hudStatusDot) hudStatusDot.classList.toggle('paused', isNowPaused);
+      if (hudStatusText) hudStatusText.textContent = isNowPaused ? 'PAUSED' : 'ACTIVE WALK';
+      if (hudHeadline) hudHeadline.textContent = isNowPaused ? 'Walk Paused' : 'Next Item Drop';
+      if (btn) btn.textContent = isNowPaused ? '▶' : '⏸';
+      return;
+    }
+
     try {
       const resp = await fetch(`/api/session/${this.currentSession.id}/${action}`, {
         method: 'POST',
@@ -718,18 +723,26 @@ class App {
       if (resp.ok) {
         const finalSession = await resp.json();
         this.setMapActiveMode(false);
-        const hudStatusText = document.getElementById('hud-status-text');
-        const hudStatusDot = document.getElementById('hud-status-indicator');
-        if (hudStatusText) hudStatusText.textContent = 'ACTIVE WALK';
-        if (hudStatusDot) hudStatusDot.classList.remove('paused');
         this.renderSummaryScreen(finalSession);
         this.currentSession = null;
         if (this.sampleBatchInterval) clearInterval(this.sampleBatchInterval);
         if (this.watchId) navigator.geolocation.clearWatch(this.watchId);
+        return;
       }
     } catch (e) {
-      console.error(e);
+      console.warn('Network error ending session, finishing locally:', e);
     }
+
+    const elapsed = Math.round((Date.now() - (this.sessionStartTimestamp || Date.now())) / 1000);
+    this.setMapActiveMode(false);
+    this.renderSummaryScreen({
+      distance_m: this.currentSession?.distance_m || 0,
+      session_elapsed_s: elapsed,
+      points_earned: 20
+    });
+    this.currentSession = null;
+    if (this.sampleBatchInterval) clearInterval(this.sampleBatchInterval);
+    if (this.watchId) navigator.geolocation.clearWatch(this.watchId);
   }
 
   renderSummaryScreen(session) {

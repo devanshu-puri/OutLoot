@@ -6,7 +6,7 @@
   <title>OutLoot 🌿✦</title>
   <link rel="manifest" href="/manifest.json" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-  <link rel="stylesheet" href="/style.css?v=2.5" />
+  <link rel="stylesheet" href="/style.css?v=2.7" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script src="/assets/lottie.min.js"></script>
   <script src="/assets/walk_shoes_data.js"></script>
@@ -82,7 +82,7 @@
         <div id="map"></div>
 
         <!-- ACTIVE WALK: Compact Top HUD Dial (Next Item Drop & Cadence) -->
-        <div id="hud-overlay" class="hud-overlay">
+        <div id="hud-overlay" class="hud-overlay" style="display: none;">
           <div class="glass-hud-dial">
             <!-- 1. Timer: Dotted clock circle dial -->
             <div class="progress-dial-wrapper">
@@ -113,24 +113,18 @@
           </button>
         </div>
 
-        <!-- IDLE STATE: Clean Floating Buttons directly above Bottom Nav -->
-        <div id="idle-walk-card" class="idle-walk-compact-bar">
-          <div class="idle-compact-row">
-            <button id="btn-start-walk-map" class="btn-compact-cta primary">
-              <span>🚶</span> Start Walk
-            </button>
-            <button id="btn-sim-walk-map" class="btn-compact-cta secondary">
-              <span>⚡</span> SIM Walk
-            </button>
-          </div>
-        </div>
+        <!-- Unified Bottom Walk Dock (Same position directly above bottom navbar) -->
+        <!-- 1. Idle State: Start Walk Button (Transitions to active notch on click) -->
+        <button id="btn-start-walk-map" class="bottom-start-walk-btn" title="Start Outdoor Walk">
+          <span>🚶</span> START WALK
+        </button>
 
-        <!-- Active Walk Floating Notch (Placed just above bottom navbar with compact 8px gap) -->
-        <div id="hud-status-pill" class="bottom-active-notch">
+        <!-- 2. Active Session State: Green glowing dot, Active Walk / Paused label, Pause/Resume & Cancel/End -->
+        <div id="hud-status-pill" class="bottom-active-notch" style="display: none;">
           <div id="hud-status-indicator" class="status-dot-active"></div>
           <span id="hud-status-text">ACTIVE WALK</span>
           <button id="btn-pause-walk" class="notch-chip-btn" title="Pause / Resume Walk">⏸</button>
-          <button id="btn-end-walk" class="notch-chip-btn end" title="End Walk">✕</button>
+          <button id="btn-end-walk" class="notch-chip-btn end" title="Cancel or End Walk">✕</button>
         </div>
 
         <!-- Walk Mode Dimmer (Battery Saving) -->
@@ -629,6 +623,6 @@
     </nav>
   </div>
 
-  <script type="module" src="/app.js?v=2.5"></script>
+  <script type="module" src="/app.js?v=2.7"></script>
 </body>
 </html>
