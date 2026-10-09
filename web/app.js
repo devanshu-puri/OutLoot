@@ -194,14 +194,21 @@ class App {
   setMapActiveMode(isActive) {
     const idleCard = document.getElementById('idle-walk-card');
     const hudOverlay = document.getElementById('hud-overlay');
-    const activeControls = document.getElementById('active-walk-controls');
-    const hudStatusPill = document.getElementById('hud-status-pill');
+    const hudStatusText = document.getElementById('hud-status-text');
+    const hudStatusDot = document.getElementById('hud-status-indicator');
+    const btnPause = document.getElementById('btn-pause-walk');
+    const btnEnd = document.getElementById('btn-end-walk');
 
     if (idleCard) idleCard.classList.toggle('hidden', isActive);
     // Keep HUD bar permanently visible so timer, next item drop, and animation are always in view
     if (hudOverlay) hudOverlay.classList.remove('hidden');
-    if (activeControls) activeControls.classList.toggle('hidden', !isActive);
-    if (hudStatusPill) hudStatusPill.classList.toggle('hidden', !isActive);
+    if (hudStatusText) hudStatusText.textContent = isActive ? 'ACTIVE WALK' : 'OUTDOOR MODE';
+    if (hudStatusDot) hudStatusDot.classList.remove('paused');
+    if (btnPause) {
+      btnPause.classList.toggle('hidden', !isActive);
+      btnPause.textContent = '⏸';
+    }
+    if (btnEnd) btnEnd.classList.toggle('hidden', !isActive);
   }
 
   async ensureAuth() {
@@ -672,8 +679,16 @@ class App {
       if (resp.ok) {
         this.currentSession = await resp.json();
         this.hudCtrl.update(this.currentSession, this.isItemAvailable);
+        const isNowPaused = this.currentSession.state === 'PAUSED';
+        const hudStatusDot = document.getElementById('hud-status-indicator');
+        const hudStatusText = document.getElementById('hud-status-text');
+        const hudHeadline = document.getElementById('hud-headline-text');
         const btn = document.getElementById('btn-pause-walk');
-        if (btn) btn.textContent = isPaused ? 'Pause' : 'Resume';
+
+        if (hudStatusDot) hudStatusDot.classList.toggle('paused', isNowPaused);
+        if (hudStatusText) hudStatusText.textContent = isNowPaused ? 'PAUSED' : 'ACTIVE WALK';
+        if (hudHeadline) hudHeadline.textContent = isNowPaused ? 'Walk Paused' : 'Next Item Drop';
+        if (btn) btn.textContent = isNowPaused ? '▶' : '⏸';
       }
     } catch (e) {
       console.error(e);
@@ -691,6 +706,10 @@ class App {
       if (resp.ok) {
         const finalSession = await resp.json();
         this.setMapActiveMode(false);
+        const hudStatusText = document.getElementById('hud-status-text');
+        const hudStatusDot = document.getElementById('hud-status-indicator');
+        if (hudStatusText) hudStatusText.textContent = 'OUTDOOR MODE';
+        if (hudStatusDot) hudStatusDot.classList.remove('paused');
         this.renderSummaryScreen(finalSession);
         this.currentSession = null;
         if (this.sampleBatchInterval) clearInterval(this.sampleBatchInterval);

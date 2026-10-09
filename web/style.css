@@ -111,6 +111,51 @@ body {
   color: #ffffff;
 }
 
+/* Header Center Notch: Active Walk & Paused Status Pill (from Image 3) */
+.header-notch-pill {
+  background: rgba(20, 16, 42, 0.95);
+  border: 1px solid rgba(167, 139, 250, 0.3);
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-family: 'VCR_OSD_MONO', monospace;
+  font-size: 11px;
+  letter-spacing: 0.8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  color: #fff;
+}
+
+.notch-chip-btn {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  font-family: 'VCR_OSD_MONO', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+}
+
+.notch-chip-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.notch-chip-btn.end {
+  background: rgba(244, 63, 94, 0.25);
+  border-color: rgba(244, 63, 94, 0.5);
+  color: var(--rose);
+}
+
+.notch-chip-btn.hidden {
+  display: none !important;
+}
+
 .brand-dot {
   width: 10px;
   height: 10px;
@@ -180,15 +225,15 @@ body {
   box-shadow: 0 0 15px var(--amber-glow);
 }
 
-/* Animated Curved Bottom Navigation Bar (Figma-style floating scoop & green bubble) */
+/* Animated Curved Bottom Navigation Bar (Docked flush to bottom:0 to eliminate background bleed) */
 .bottom-tabs {
   position: fixed;
-  bottom: 14px;
+  bottom: 0;
   left: 50%;
   transform: translateX(-50%);
-  width: calc(100% - 28px);
-  max-width: 440px;
-  height: 62px;
+  width: 100%;
+  max-width: 480px;
+  height: 66px;
   background: transparent;
   z-index: 1000;
   display: flex;
@@ -215,9 +260,8 @@ body {
 }
 
 .nav-bar-path {
-  fill: rgba(18, 15, 38, 0.95);
-  backdrop-filter: blur(24px);
-  stroke: rgba(167, 139, 250, 0.25);
+  fill: #0c0a1e;
+  stroke: rgba(167, 139, 250, 0.22);
   stroke-width: 1.2px;
 }
 
@@ -329,7 +373,7 @@ body {
   display: none;
   flex: 1;
   padding-top: 64px;
-  padding-bottom: 76px;
+  padding-bottom: 120px;
   min-height: 100vh;
 }
 
@@ -525,46 +569,88 @@ body {
   transform: scale(0.95);
 }
 
-/* Idle State Floating Card on Map */
-.idle-walk-glass-card {
+/* Floating Right-Side Controls: Theme Toggle & Locate Me (from Image 3) */
+.map-floating-controls-right {
   position: absolute;
-  bottom: 86px;
-  left: 16px;
-  right: 16px;
+  top: 154px;
+  right: 14px;
   z-index: 500;
-  background: rgba(15, 12, 33, 0.92);
-  backdrop-filter: blur(24px);
-  border: 1px solid rgba(167, 139, 250, 0.25);
-  border-radius: var(--radius-xl);
-  padding: 20px 22px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
-  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  gap: 10px;
   pointer-events: auto;
 }
 
-.idle-walk-glass-card.hidden {
+/* IDLE STATE: Clean Floating Actions directly above Bottom Nav (from Image 3) */
+.idle-walk-compact-bar {
+  position: absolute;
+  bottom: 78px;
+  left: 16px;
+  right: 16px;
+  z-index: 500;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: auto;
+}
+
+.idle-walk-compact-bar.hidden {
   opacity: 0;
-  transform: translateY(40px);
+  transform: translateY(30px);
   pointer-events: none;
 }
 
-/* Remove redundant background navbar */
-.active-walk-controls {
-  display: none !important;
+.idle-compact-row {
+  display: flex;
+  gap: 10px;
 }
 
-#map-coords-indicator {
-  font-family: 'VCR_OSD_MONO', monospace;
-  letter-spacing: 0.5px;
+.btn-compact-cta {
+  flex: 1;
+  height: 48px;
+  border-radius: var(--radius-full);
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  border: none;
+}
+
+.btn-compact-cta.primary {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #fff;
+  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.4);
+}
+
+.btn-compact-cta.primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(16, 185, 129, 0.55);
+}
+
+.btn-compact-cta.secondary {
+  background: rgba(18, 15, 38, 0.9);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(167, 139, 250, 0.25);
+  color: var(--text-main);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.btn-compact-cta.secondary:hover {
+  background: rgba(26, 21, 55, 0.95);
+  transform: translateY(-2px);
+  border-color: rgba(167, 139, 250, 0.45);
 }
 
 /* Modern HUD Overlay — Compact floating bar */
 .hud-overlay {
   position: absolute;
-  top: 66px;
+  top: 72px;
   left: 14px;
   right: 14px;
   z-index: 500;
@@ -581,53 +667,6 @@ body {
   pointer-events: none;
 }
 
-.hud-pill-chip {
-  align-self: center;
-  background: rgba(14, 11, 31, 0.9);
-  backdrop-filter: blur(16px);
-  border: 1px solid var(--border-card);
-  padding: 5px 12px;
-  border-radius: var(--radius-full);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  pointer-events: auto;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-  font-family: 'VCR_OSD_MONO', monospace;
-  letter-spacing: 0.8px;
-}
-
-.hud-chip-action-btn {
-  background: rgba(255, 255, 255, 0.12);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: #fff;
-  font-family: 'VCR_OSD_MONO', monospace;
-  font-size: 11px;
-  font-weight: 700;
-  padding: 3px 8px;
-  border-radius: var(--radius-full);
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  pointer-events: auto;
-}
-
-.hud-chip-action-btn:hover {
-  background: rgba(255, 255, 255, 0.22);
-}
-
-.hud-chip-action-btn.end {
-  background: rgba(244, 63, 94, 0.25);
-  border-color: rgba(244, 63, 94, 0.5);
-  color: var(--rose);
-}
-
-.hud-chip-action-btn.end:hover {
-  background: rgba(244, 63, 94, 0.45);
-}
-
 .status-dot-active {
   width: 8px;
   height: 8px;
@@ -641,9 +680,13 @@ body {
   box-shadow: 0 0 10px var(--amber);
 }
 
-/* Ensure Leaflet zoom buttons do not overlap bottom navbar */
-.leaflet-bottom {
-  bottom: 86px !important;
+/* Hide default Leaflet controls to keep UI clean and uncluttered */
+.leaflet-control-attribution {
+  display: none !important;
+}
+
+.leaflet-control-zoom {
+  display: none !important;
 }
 
 /* Glass One-Glance Dial Card — Strict Alignment | timer | next item drop | walk animation | */

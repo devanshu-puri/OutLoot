@@ -16,7 +16,7 @@ export class BottomNavAnimator {
     this.init();
   }
 
-  getBarPath(x, w = 400, h = 62, r = 26, scoopW = 32, scoopD = 25) {
+  getBarPath(x, w = 400, h = 66, r = 22, scoopW = 32, scoopD = 25) {
     const x1 = Math.max(r, x - scoopW);
     const x2 = Math.min(w - r, x + scoopW);
     const c1x = x - scoopW * 0.45;
@@ -28,9 +28,9 @@ export class BottomNavAnimator {
     d += `C ${c2x.toFixed(1)},${scoopD} ${c2x.toFixed(1)},0 ${x2.toFixed(1)},0 `;
     if (x2 < w - r) d += `L ${(w - r).toFixed(1)},0 `;
     d += `A ${r},${r} 0 0 1 ${w},${r} `;
-    d += `A ${r},${r} 0 0 1 ${w - r},${h} `;
-    d += `L ${r},${h} `;
-    d += `A ${r},${r} 0 0 1 0,${r} Z`;
+    d += `L ${w},${h} `;
+    d += `L 0,${h} `;
+    d += `L 0,${r} Z`;
     return d;
   }
 
