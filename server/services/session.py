@@ -194,5 +194,12 @@ def end_session(conn: sqlite3.Connection, session_id: str, user_id: str) -> Sess
             (session_id, session_id)
         )
 
+        # Update user outdoor time & reset screen streak
+        duration_s = float(row["session_elapsed_s"] or 0.0)
+        if duration_s <= 0:
+            duration_s = max(60.0, float(row["cycle_progress_s"] or 0.0))
+        from server.services.social import reset_screen_streak_after_walk
+        reset_screen_streak_after_walk(conn, user_id, duration_s)
+
         updated = conn.execute("SELECT * FROM sessions WHERE id = ?;", (session_id,)).fetchone()
         return build_session_response(conn, updated, user_id)

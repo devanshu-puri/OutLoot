@@ -71,11 +71,24 @@ def run_migrations(conn: sqlite3.Connection, migrations_dir: Optional[Path] = No
     if not migrations_dir.exists():
         return
 
+    conn.execute("CREATE TABLE IF NOT EXISTS schema_migrations (filename TEXT PRIMARY KEY, applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);")
+    applied = {row[0] for row in conn.execute("SELECT filename FROM schema_migrations;").fetchall()}
+
     sql_files = sorted(migrations_dir.glob("*.sql"))
     for sql_file in sql_files:
-        with open(sql_file, "r", encoding="utf-8") as f:
-            script = f.read()
-            conn.executescript(script)
+        if sql_file.name not in applied:
+            with open(sql_file, "r", encoding="utf-8") as f:
+                script = f.read()
+            statements = [s.strip() for s in script.split(";") if s.strip()]
+            for stmt in statements:
+                try:
+                    conn.execute(stmt)
+                except sqlite3.OperationalError as e:
+                    err_msg = str(e).lower()
+                    if "duplicate column name" in err_msg or "already exists" in err_msg:
+                        continue
+                    raise
+            conn.execute("INSERT OR REPLACE INTO schema_migrations (filename) VALUES (?);", (sql_file.name,))
 
 
 def init_db(db_path: Optional[Path] = None) -> None:

@@ -175,3 +175,94 @@ class AdjustPointsReq(BaseModel):
     user_id: str
     delta: int
     note: str
+
+
+# --- Screen Time & Digital Wellbeing ---
+
+class ScreenTimeHeartbeatReq(BaseModel):
+    active_s: float = Field(ge=0, description="Active engaged seconds since last heartbeat")
+    idle_s: float = Field(default=0.0, ge=0, description="Idle/inactive seconds")
+
+
+class ScreenTimeHeartbeatResp(BaseModel):
+    screen_time_total_s: float
+    current_screen_streak_s: float
+    screen_time_threshold_s: float
+    outdoor_time_total_s: float
+    touch_grass_alert: bool
+    touch_grass_ratio: float
+    grass_debt_minutes: float
+    message: str
+
+
+class ScreenTimeImportReq(BaseModel):
+    daily_screen_hours: float = Field(ge=0.1, le=24.0)
+    device_label: str = "Android Digital Wellbeing"
+
+
+class ScreenTimeImportResp(BaseModel):
+    imported_hours: float
+    total_screen_hours: float
+    grass_debt_minutes: float
+    suggested_walk_mins: int
+    message: str
+
+
+class UpdateThresholdReq(BaseModel):
+    threshold_minutes: int = Field(ge=1, le=360)
+
+
+# --- Friends & Social System ---
+
+class AddFriendReq(BaseModel):
+    friend_code_or_name: str
+
+
+class FriendNudgeReq(BaseModel):
+    friend_id: str
+    message: Optional[str] = "🌱 Time to Touch Grass! Take a quick 15-min walk outside."
+
+
+class FriendItem(BaseModel):
+    user_id: str
+    display_name: str
+    avatar_emoji: str
+    outdoor_mins: float
+    screen_mins: float
+    touch_grass_ratio: float
+    points: int
+    status_msg: str
+    is_online: bool
+    last_seen: str
+
+
+class FriendNudgeItem(BaseModel):
+    id: str
+    sender_id: str
+    sender_name: str
+    sender_avatar: str
+    message: str
+    created_at: str
+
+
+# --- Live Leaderboard ---
+
+class LeaderboardItem(BaseModel):
+    rank: int
+    user_id: str
+    display_name: str
+    avatar_emoji: str
+    grass_score: int
+    points: int
+    outdoor_mins: float
+    screen_mins: float
+    ratio_percent: int
+    is_friend: bool
+    is_current_user: bool
+
+
+class LeaderboardResp(BaseModel):
+    leaderboard: List[LeaderboardItem]
+    user_rank: int
+    total_walkers: int
+    time_window: str = "Live All-Time"

@@ -72,18 +72,20 @@
 - [x] T4.8 Mission card (AI source badge: "Gemma · local" / "Fallback") + session summary ("outside 14 min, screen 2 min") — verified (2026-10-09 21:50)
 - [x] T4.9 Manual E2E checklist passed in sim mode & verified with browser subagent recording (2026-10-09 21:50)
 
-## PHASE P5 — Hardening & Demo (M9)
-- [ ] T5.1 TTL purge job for raw samples; privacy text in-app (30m)
-- [ ] T5.2 README: setup/run/test, **truthful** what-works / not-working / offline table (45m)
-- [ ] T5.3 Real outdoor test by USER (see checklist) → fill MEMORY §6 (≈1.5 h)
-- [ ] T5.4 Record demo video (screen + outdoor clip) (60m)
-- [ ] T5.5 Final full `pytest -q`; paste count into MEMORY §6
+## PHASE P5 — Social, Screen Time & Live Leaderboard (M9 MVP 2.0)
+- [x] T5.1 Database Migration `002_social_and_screentime.sql` (screen time totals, thresholds, streaks, friends, nudges, events) — passed (2026-10-09 22:05)
+- [x] T5.2 Real-time Active Screen Time Heartbeat (`/api/screentime/heartbeat`) with threshold evaluator & streak alerts — passed (2026-10-09 22:08)
+- [x] T5.3 Android Digital Wellbeing Sync & Grass Debt extraction (`/api/screentime/import`) — passed (2026-10-09 22:08)
+- [x] T5.4 Live Leaderboard (`/api/leaderboard`) ranked by Grass Score (points + outdoor walk minutes) with Global & Friends filters — passed (2026-10-09 22:18)
+- [x] T5.5 Friends System (`/api/friends/add`, `/api/friends`, `/api/friends/nudge`, `/api/friends/nudges`) — passed (2026-10-09 22:18)
+- [x] T5.6 Organic UI & Micro-interactions: Frosted glass (`backdrop-filter: blur(20px)`), non-boxy bento cards, tactile pill buttons, Touch Grass modal alert & audio cue — verified (2026-10-09 22:19)
+- [x] T5.7 Integration test suite `tests/verify_mvp2.py` verifying all 11 user workflows end-to-end — 100% green (2026-10-09 22:19)
 
-## PHASE P6 — Submission (M10) — see SUBMISSION.md
-- [ ] T6.1 Fill post using SUBMISSION.md skeleton; every claim backed by MEMORY §6
+## PHASE P6 — Submission & Documentation (M10) — see SUBMISSION.md
+- [ ] T6.1 README & Documentation update: setup/run/test, Android screen time extraction guide, sponsor integrations table
 - [ ] T6.2 Export agent session (DevRelay/Entire) and embed with `{% agent_session ID %}`
-- [ ] T6.3 Add code repo link + video link; double-check tags `#devchallenge #hf26challenge`
-- [ ] T6.4 Publish (target: before Oct 11 midday IST)
+- [ ] T6.3 Submission draft for DEV Challenge (deadline Oct 11 midday IST)
+- [ ] T6.4 Add code repo link + video demo link; double-check tags `#devchallenge #hf26challenge`
 
 ## MANUAL E2E CHECKLIST (sim mode)
 - [ ] Start session → HUD shows ACTIVE · [ ] sim walk advances progress ring · [ ] stationary stretch pauses ring
