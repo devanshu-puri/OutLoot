@@ -502,9 +502,10 @@ html, body {
 
 /* Map Screen */
 .map-screen-wrapper {
-  position: relative;
+  position: absolute;
+  inset: 0;
   width: 100%;
-  height: calc(100vh - 64px - 68px);
+  height: 100%;
   background: #090814;
   overflow: hidden;
 }
@@ -577,13 +578,13 @@ html, body {
   pointer-events: auto;
 }
 
-/* IDLE STATE: Clean Floating Buttons directly above Bottom Nav */
+/* IDLE STATE: Clean Floating Buttons directly above Active Walk Notch */
 .idle-walk-compact-bar {
   position: absolute;
-  bottom: 74px;
+  bottom: calc(120px + env(safe-area-inset-bottom, 0px));
   left: 16px;
   right: 16px;
-  z-index: 500;
+  z-index: 990;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -600,23 +601,23 @@ html, body {
 /* Active Walk Floating Notch (Placed just above bottom navbar with compact 8px gap) */
 .bottom-active-notch {
   position: absolute;
-  bottom: 74px;
+  bottom: calc(74px + env(safe-area-inset-bottom, 0px));
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(16, 13, 36, 0.95);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(167, 139, 250, 0.3);
+  background: rgba(14, 11, 30, 0.96);
+  backdrop-filter: blur(24px);
+  border: 1px solid rgba(167, 139, 250, 0.35);
   padding: 5px 14px;
   border-radius: var(--radius-full);
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   font-family: 'VCR_OSD_MONO', monospace;
   font-size: 11px;
-  letter-spacing: 0.8px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  letter-spacing: 0.9px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.7);
   color: #fff;
-  z-index: 500;
+  z-index: 990;
   pointer-events: auto;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   white-space: nowrap;
@@ -629,32 +630,37 @@ html, body {
 }
 
 .notch-chip-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
   background: rgba(255, 255, 255, 0.12);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.22);
   color: #fff;
   font-family: 'VCR_OSD_MONO', monospace;
   font-size: 10px;
   font-weight: 700;
-  padding: 3px 8px;
-  border-radius: var(--radius-full);
+  padding: 0;
   cursor: pointer;
   transition: all 0.2s ease;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
 }
 
 .notch-chip-btn:hover {
   background: rgba(255, 255, 255, 0.25);
+  transform: scale(1.08);
 }
 
 .notch-chip-btn.end {
-  background: rgba(244, 63, 94, 0.25);
-  border-color: rgba(244, 63, 94, 0.5);
-  color: var(--rose);
+  background: rgba(244, 63, 94, 0.28);
+  border-color: rgba(244, 63, 94, 0.55);
+  color: #ff6584;
 }
 
 .notch-chip-btn.end:hover {
   background: rgba(244, 63, 94, 0.45);
+  transform: scale(1.08);
 }
 
 .idle-compact-row {

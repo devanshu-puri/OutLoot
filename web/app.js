@@ -194,21 +194,22 @@ class App {
   setMapActiveMode(isActive) {
     const idleCard = document.getElementById('idle-walk-card');
     const hudOverlay = document.getElementById('hud-overlay');
+    const hudStatusPill = document.getElementById('hud-status-pill');
     const hudStatusText = document.getElementById('hud-status-text');
     const hudStatusDot = document.getElementById('hud-status-indicator');
     const btnPause = document.getElementById('btn-pause-walk');
     const btnEnd = document.getElementById('btn-end-walk');
 
     if (idleCard) idleCard.classList.toggle('hidden', isActive);
-    // Keep HUD bar permanently visible so timer, next item drop, and animation are always in view
+    if (hudStatusPill) hudStatusPill.classList.remove('hidden');
     if (hudOverlay) hudOverlay.classList.remove('hidden');
-    if (hudStatusText) hudStatusText.textContent = isActive ? 'ACTIVE WALK' : 'OUTDOOR MODE';
+    if (hudStatusText) hudStatusText.textContent = isActive ? 'ACTIVE WALK' : 'ACTIVE WALK';
     if (hudStatusDot) hudStatusDot.classList.remove('paused');
     if (btnPause) {
-      btnPause.classList.toggle('hidden', !isActive);
+      btnPause.classList.remove('hidden');
       btnPause.textContent = '⏸';
     }
-    if (btnEnd) btnEnd.classList.toggle('hidden', !isActive);
+    if (btnEnd) btnEnd.classList.remove('hidden');
   }
 
   async ensureAuth() {
@@ -667,7 +668,10 @@ class App {
   }
 
   async togglePauseSession() {
-    if (!this.currentSession) return;
+    if (!this.currentSession) {
+      this.startSessionFlow();
+      return;
+    }
     const isPaused = this.currentSession.state === 'PAUSED';
     const action = isPaused ? 'resume' : 'pause';
 
@@ -708,7 +712,7 @@ class App {
         this.setMapActiveMode(false);
         const hudStatusText = document.getElementById('hud-status-text');
         const hudStatusDot = document.getElementById('hud-status-indicator');
-        if (hudStatusText) hudStatusText.textContent = 'OUTDOOR MODE';
+        if (hudStatusText) hudStatusText.textContent = 'ACTIVE WALK';
         if (hudStatusDot) hudStatusDot.classList.remove('paused');
         this.renderSummaryScreen(finalSession);
         this.currentSession = null;

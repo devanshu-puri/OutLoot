@@ -19,6 +19,7 @@ export class HUDController {
     this.dotCount = 36;
     this.dots = [];
     this.lottieAnim = null;
+    this.isSessionActive = false;
 
     this.initDots();
     this.initLottieAnimation();
@@ -88,12 +89,16 @@ export class HUDController {
     const resetIdle = () => {
       if (this.dimmer) this.dimmer.classList.remove('active');
       clearTimeout(this.idleTimer);
+      if (!this.isSessionActive) return;
       this.idleTimer = setTimeout(() => {
         // Dim screen after 25 seconds of idle walking to conserve battery
-        if (this.dimmer) this.dimmer.classList.add('active');
+        if (this.isSessionActive && this.dimmer) this.dimmer.classList.add('active');
       }, 25000);
     };
 
+    if (this.dimmer) {
+      this.dimmer.addEventListener('click', resetIdle);
+    }
     window.addEventListener('touchstart', resetIdle, { passive: true });
     window.addEventListener('mousemove', resetIdle, { passive: true });
     window.addEventListener('click', resetIdle, { passive: true });
@@ -102,6 +107,11 @@ export class HUDController {
 
   update(session, isItemAvailable = false) {
     if (!session) return;
+
+    this.isSessionActive = (session.state === 'ACTIVE');
+    if (!this.isSessionActive && this.dimmer) {
+      this.dimmer.classList.remove('active');
+    }
 
     // Status chip
     if (this.statusIndicator && this.statusChipText) {
