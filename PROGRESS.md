@@ -95,6 +95,7 @@
 - [x] T7.5 Integrated `walk cycling shoes.json` Lottie animation with offline `lottie.min.js` beside Next Item Drop — implemented in `web/hud.js` (2026-10-10 00:05)
 - [x] T7.6 Strict horizontal HUD alignment: `| [Timer / Dotted Dial] | [Next Item Drop details] | [Walking Shoes animation] |` — verified (2026-10-10 00:05)
 - [x] T7.7 Animated curved bottom navigation bar with scooped notch cutout & floating green bubble transition (Figma component pattern) — implemented & verified (2026-10-10 01:46)
+- [x] T7.8 Floating active bubble & scoop alignment fix (locked at 60 FPS in nav.js) + eliminated duplicate background navbar collisions — verified in browser & pushed (2026-10-10 02:04)
 
 ## MANUAL E2E CHECKLIST (sim mode)
 - [ ] Start session → HUD shows ACTIVE · [ ] sim walk advances progress ring · [ ] stationary stretch pauses ring
