@@ -94,6 +94,7 @@
 - [x] T7.4 Dotted clock progress ring dial (36 discrete circular dots evenly spaced around circumference that fill and illuminate sequentially as cycle time progresses) — implemented in `web/hud.js` & `web/style.css` (2026-10-10 00:05)
 - [x] T7.5 Integrated `walk cycling shoes.json` Lottie animation with offline `lottie.min.js` beside Next Item Drop — implemented in `web/hud.js` (2026-10-10 00:05)
 - [x] T7.6 Strict horizontal HUD alignment: `| [Timer / Dotted Dial] | [Next Item Drop details] | [Walking Shoes animation] |` — verified (2026-10-10 00:05)
+- [x] T7.7 Animated curved bottom navigation bar with scooped notch cutout & floating green bubble transition (Figma component pattern) — implemented & verified (2026-10-10 01:46)
 
 ## MANUAL E2E CHECKLIST (sim mode)
 - [ ] Start session → HUD shows ACTIVE · [ ] sim walk advances progress ring · [ ] stationary stretch pauses ring
