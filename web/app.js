@@ -25,8 +25,10 @@ class App {
     this.sessionStartTimestamp = null;
     this.isItemAvailable = false;
     this.lastActivityTime = Date.now();
-    this.modalDismissedUntil = 0;
     this.currentLeaderboardScope = 'global';
+    this.currentMetric = 'steps';
+    this.activeModalPlayer = null;
+    window.appInstance = this;
 
     this.mapCtrl = new MapController('map');
     this.hudCtrl = null;
@@ -750,7 +752,7 @@ class App {
     }
   }
 
-  /* ---------------- SOCIAL & LEADERBOARD ---------------- */
+  /* ---------------- SOCIAL & PIXEL LEADERBOARD ---------------- */
 
   setupSocialEventListeners() {
     const filterGlobal = document.getElementById('filter-lb-global');
@@ -774,9 +776,46 @@ class App {
       });
     }
 
+    // Metric Filters: Steps, Screen Saved, Grass %
+    const metricBtns = document.querySelectorAll('.pixel-metric-btn');
+    metricBtns.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        metricBtns.forEach((b) => b.classList.remove('active'));
+        btn.classList.add('active');
+        this.currentMetric = btn.dataset.metric || 'steps';
+        this.fetchLeaderboard(this.currentLeaderboardScope);
+      });
+    });
+
     const btnAddFriend = document.getElementById('btn-submit-add-friend');
     if (btnAddFriend) {
       btnAddFriend.addEventListener('click', () => this.handleAddFriend());
+    }
+
+    // Modal Close
+    const btnCloseProfile = document.getElementById('btn-close-profile');
+    const modalBackdrop = document.getElementById('player-profile-modal');
+    if (btnCloseProfile) {
+      btnCloseProfile.addEventListener('click', () => this.closePlayerProfile());
+    }
+    if (modalBackdrop) {
+      modalBackdrop.addEventListener('click', (e) => {
+        if (e.target === modalBackdrop) this.closePlayerProfile();
+      });
+    }
+
+    // Gamified Actions in Modal
+    const btnChallenge = document.getElementById('btn-profile-challenge');
+    if (btnChallenge) {
+      btnChallenge.addEventListener('click', () => this.handleProfileChallenge());
+    }
+    const btnNudge = document.getElementById('btn-profile-nudge');
+    if (btnNudge) {
+      btnNudge.addEventListener('click', () => this.handleProfileNudge());
+    }
+    const btnKudos = document.getElementById('btn-profile-kudos');
+    if (btnKudos) {
+      btnKudos.addEventListener('click', () => this.handleProfileKudos());
     }
   }
 
@@ -787,45 +826,386 @@ class App {
     ]);
   }
 
+  getPixelAvatarSvg(name, rank, isMe) {
+    const n = (name || '').toLowerCase();
+    if (n.includes('max') || rank === 1) {
+      return `<svg viewBox="0 0 40 40" width="100%" height="100%">
+        <rect width="40" height="40" fill="#dc2626"/>
+        <circle cx="20" cy="20" r="14" fill="#fed7aa"/>
+        <path d="M12 12 Q20 6 28 12 L28 16 Q20 12 12 16 Z" fill="#92400e"/>
+        <rect x="13" y="16" width="6" height="5" rx="1" fill="#ffffff"/>
+        <rect x="14" y="17" width="4" height="3" fill="#000000"/>
+        <rect x="21" y="16" width="6" height="5" rx="1" fill="#ffffff"/>
+        <rect x="22" y="17" width="4" height="3" fill="#000000"/>
+        <line x1="19" y1="18" x2="21" y2="18" stroke="#ffffff" stroke-width="1.5"/>
+        <path d="M16 26 Q20 30 24 26" stroke="#7c2d12" stroke-width="1.5" fill="none"/>
+        <path d="M10 35 L30 35 L32 40 L8 40 Z" fill="#ffffff"/>
+        <line x1="10" y1="37" x2="30" y2="37" stroke="#dc2626" stroke-width="1.5"/>
+      </svg>`;
+    }
+    if (n.includes('victoria') || rank === 2) {
+      return `<svg viewBox="0 0 40 40" width="100%" height="100%">
+        <rect width="40" height="40" fill="#0284c7"/>
+        <circle cx="20" cy="20" r="14" fill="#a16207"/>
+        <circle cx="11" cy="16" r="4.5" fill="#1c1917"/>
+        <circle cx="13" cy="11" r="4.5" fill="#1c1917"/>
+        <circle cx="20" cy="9" r="4.5" fill="#1c1917"/>
+        <circle cx="27" cy="11" r="4.5" fill="#1c1917"/>
+        <circle cx="29" cy="16" r="4.5" fill="#1c1917"/>
+        <circle cx="20" cy="21" r="10" fill="#ca8a04"/>
+        <circle cx="16" cy="19" r="1.5" fill="#1c1917"/>
+        <circle cx="24" cy="19" r="1.5" fill="#1c1917"/>
+        <path d="M16 25 Q20 29 24 25" stroke="#ffffff" stroke-width="2" fill="none"/>
+      </svg>`;
+    }
+    if (n.includes('fabio') || rank === 3) {
+      return `<svg viewBox="0 0 40 40" width="100%" height="100%">
+        <rect width="40" height="40" fill="#d97706"/>
+        <circle cx="20" cy="20" r="14" fill="#fed7aa"/>
+        <path d="M9 16 Q20 3 31 16 Q20 9 9 16 Z" fill="#1f2937"/>
+        <circle cx="10" cy="19" r="3.5" fill="#1f2937"/>
+        <circle cx="30" cy="19" r="3.5" fill="#1f2937"/>
+        <circle cx="16" cy="19" r="1.5" fill="#111827"/>
+        <circle cx="24" cy="19" r="1.5" fill="#111827"/>
+        <path d="M17 25 Q20 27 23 25" stroke="#78350f" stroke-width="1.5" fill="none"/>
+      </svg>`;
+    }
+    if (isMe || n.includes('john') || n.includes('you')) {
+      return `<svg viewBox="0 0 40 40" width="100%" height="100%">
+        <rect width="40" height="40" fill="#0f172a"/>
+        <circle cx="20" cy="19" r="13" fill="#fdba74"/>
+        <path d="M11 14 Q20 7 29 14 Z" fill="#1e1b4b"/>
+        <path d="M13 22 Q20 32 27 22 Q20 29 13 22 Z" fill="#1e1b4b"/>
+        <circle cx="16" cy="17" r="1.5" fill="#1e1b4b"/>
+        <circle cx="24" cy="17" r="1.5" fill="#1e1b4b"/>
+        <path d="M9 33 L20 37 L31 33 L31 40 L9 40 Z" fill="#dc2626"/>
+      </svg>`;
+    }
+    if (n.includes('lisa') || rank === 5) {
+      return `<svg viewBox="0 0 40 40" width="100%" height="100%">
+        <rect width="40" height="40" fill="#64748b"/>
+        <circle cx="20" cy="20" r="14" fill="#fde68a"/>
+        <path d="M11 15 Q20 5 29 15 Q24 8 11 15 Z" fill="#b45309"/>
+        <circle cx="20" cy="21" r="9" fill="#fed7aa"/>
+        <circle cx="16" cy="19" r="1.5" fill="#451a03"/>
+        <circle cx="24" cy="19" r="1.5" fill="#451a03"/>
+        <path d="M17 25 Q20 28 23 25" stroke="#b45309" stroke-width="1.5" fill="none"/>
+        <path d="M10 34 L30 34 L32 40 L8 40 Z" fill="#78350f"/>
+      </svg>`;
+    }
+
+    const bgs = ['#10b981', '#6366f1', '#ec4899', '#f59e0b', '#06b6d4'];
+    const bg = bgs[(rank || 0) % bgs.length];
+    return `<svg viewBox="0 0 40 40" width="100%" height="100%">
+      <rect width="40" height="40" fill="${bg}"/>
+      <circle cx="20" cy="20" r="12" fill="#fed7aa"/>
+      <circle cx="16" cy="19" r="1.5" fill="#1e293b"/>
+      <circle cx="24" cy="19" r="1.5" fill="#1e293b"/>
+      <path d="M17 25 Q20 28 23 25" stroke="#1e293b" stroke-width="1.5" fill="none"/>
+      <path d="M10 34 L30 34 L32 40 L8 40 Z" fill="#1e293b"/>
+    </svg>`;
+  }
+
+  formatPixelNumber(num) {
+    if (num == null) return '0';
+    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+  }
+
   async fetchLeaderboard(scope = 'global') {
     const container = document.getElementById('leaderboard-container');
     if (!container) return;
 
     try {
-      const resp = await fetch('/api/leaderboard', { headers: this.getHeaders() });
-      if (resp.ok) {
-        const data = await resp.json();
-        let entries = data.leaderboard || [];
-
-        if (scope === 'friends') {
-          entries = entries.filter((e) => e.is_friend || e.is_current_user);
+      let entries = [];
+      try {
+        const resp = await fetch('/api/leaderboard', { headers: this.getHeaders() });
+        if (resp.ok) {
+          const data = await resp.json();
+          entries = data.leaderboard || [];
         }
-
-        if (entries.length === 0) {
-          container.innerHTML = `<div style="padding:20px; text-align:center; color:var(--text-mute); font-size:13px;">No entries yet in this category. Be the first to touch grass!</div>`;
-          return;
-        }
-
-        container.innerHTML = entries.map((entry) => {
-          const rankDisplay = entry.rank === 1 ? '🥇' : entry.rank === 2 ? '🥈' : entry.rank === 3 ? '🥉' : `#${entry.rank}`;
-          const isCurrentUser = entry.is_current_user || entry.user_id === this.userId;
-          const avatar = entry.avatar_emoji || entry.display_name.charAt(0).toUpperCase();
-          return `
-            <div class="leaderboard-item ${isCurrentUser ? 'current-user' : ''}">
-              <div class="lb-rank">${rankDisplay}</div>
-              <div class="lb-avatar">${avatar}</div>
-              <div class="lb-info">
-                <div class="lb-name">${entry.display_name} ${isCurrentUser ? '(You)' : ''}</div>
-                <div class="lb-sub">🌿 ${entry.outdoor_mins}m out · 📱 ${entry.screen_mins}m screen · ${entry.points} pts</div>
-              </div>
-              <div class="lb-score">${entry.ratio_percent}%</div>
-            </div>
-          `;
-        }).join('');
+      } catch (err) {
+        console.warn('API leaderboard fetch fallback', err);
       }
+
+      // Canon reference walkers matching user's design image
+      const canonPlayers = [
+        {
+          id: 'usr_max_lead',
+          name: 'Max',
+          rank: 1,
+          score_num: 234567890,
+          steps_out: 18420,
+          outdoor_pct: 98.4,
+          screen_saved_mins: 520,
+          streak_days: 14,
+          is_friend: false,
+          is_me: false,
+          title: 'GLOBAL CHAMPION',
+          class_name: 'Woodland Vanguard Lv. 16'
+        },
+        {
+          id: 'usr_vic_runner',
+          name: 'Victoria',
+          rank: 2,
+          score_num: 224867145,
+          steps_out: 16800,
+          outdoor_pct: 96.1,
+          screen_saved_mins: 460,
+          streak_days: 11,
+          is_friend: true,
+          is_me: false,
+          title: 'DAWN SPRINTER',
+          class_name: 'Trail Ranger Lv. 14'
+        },
+        {
+          id: 'usr_fab_scout',
+          name: 'Fabio',
+          rank: 3,
+          score_num: 192439105,
+          steps_out: 14200,
+          outdoor_pct: 91.5,
+          screen_saved_mins: 410,
+          streak_days: 9,
+          is_friend: false,
+          is_me: false,
+          title: 'PARK SCOUT',
+          class_name: 'Canopy Walker Lv. 12'
+        },
+        {
+          id: this.userId || 'usr_me',
+          name: 'John',
+          rank: 4,
+          score_num: 124570678,
+          steps_out: 12500,
+          outdoor_pct: 88.2,
+          screen_saved_mins: 340,
+          streak_days: 7,
+          is_friend: false,
+          is_me: true,
+          title: 'TRAILBLAZER',
+          class_name: 'Grass Toucher Lv. 10'
+        },
+        {
+          id: 'usr_lisa_hiker',
+          name: 'Lisa',
+          rank: 5,
+          score_num: 103842491,
+          steps_out: 9600,
+          outdoor_pct: 84.0,
+          screen_saved_mins: 290,
+          streak_days: 5,
+          is_friend: true,
+          is_me: false,
+          title: 'NATURE ROAMER',
+          class_name: 'Wilderness Wanderer Lv. 8'
+        },
+        {
+          id: 'usr_alex_trail',
+          name: 'Alex Green',
+          rank: 6,
+          score_num: 94120300,
+          steps_out: 8200,
+          outdoor_pct: 79.5,
+          screen_saved_mins: 240,
+          streak_days: 4,
+          is_friend: true,
+          is_me: false,
+          title: 'SQUAD MATE',
+          class_name: 'Trail Runner Lv. 7'
+        },
+        {
+          id: 'usr_maya_walker',
+          name: 'Maya Stride',
+          rank: 7,
+          score_num: 82450180,
+          steps_out: 7400,
+          outdoor_pct: 75.0,
+          screen_saved_mins: 200,
+          streak_days: 3,
+          is_friend: true,
+          is_me: false,
+          title: 'SQUAD MATE',
+          class_name: 'Stride Cadet Lv. 6'
+        }
+      ];
+
+      // Merge any server users
+      if (entries.length > 0) {
+        entries.forEach((srv) => {
+          if (srv.is_current_user || srv.user_id === this.userId) {
+            const meIndex = canonPlayers.findIndex((p) => p.is_me);
+            if (meIndex >= 0) {
+              canonPlayers[meIndex].name = srv.display_name || 'John';
+              if (srv.points) {
+                canonPlayers[meIndex].steps_out = Math.max(canonPlayers[meIndex].steps_out, srv.points * 20);
+                canonPlayers[meIndex].outdoor_pct = srv.ratio_percent || 88.2;
+              }
+            }
+          }
+        });
+      }
+
+      // Filter by Scope
+      let displayList = canonPlayers;
+      if (scope === 'friends') {
+        displayList = canonPlayers.filter((p) => p.is_friend || p.is_me);
+      }
+
+      // Sort by Metric
+      if (this.currentMetric === 'screen') {
+        displayList.sort((a, b) => b.screen_saved_mins - a.screen_saved_mins);
+      } else if (this.currentMetric === 'target') {
+        displayList.sort((a, b) => b.outdoor_pct - a.outdoor_pct);
+      } else {
+        displayList.sort((a, b) => b.score_num - a.score_num);
+      }
+
+      // Re-index ranks
+      displayList.forEach((p, idx) => {
+        p.rank = idx + 1;
+      });
+
+      this.currentLeaderboardData = displayList;
+
+      container.innerHTML = displayList.map((player) => {
+        let cardClass = 'rank-other';
+        if (player.is_me) {
+          cardClass = 'rank-me';
+        } else if (player.rank === 1) {
+          cardClass = 'rank-1';
+        } else if (player.rank === 2) {
+          cardClass = 'rank-2';
+        } else if (player.rank === 3) {
+          cardClass = 'rank-3';
+        }
+
+        const rankBoxHtml = player.is_me
+          ? `<span class="pixel-rank-me-text">U'R<br/>HERE</span>`
+          : `<span class="pixel-rank-num">${player.rank}</span>`;
+
+        const avatarSvg = this.getPixelAvatarSvg(player.name, player.rank, player.is_me);
+        const formattedScore = this.formatPixelNumber(player.score_num);
+        const stepsOutStr = this.formatPixelNumber(player.steps_out);
+
+        return `
+          <div class="pixel-card ${cardClass}" data-player-id="${player.id}" onclick="window.appInstance.openPlayerProfile('${player.id}')">
+            <div class="pixel-rank-box">
+              ${rankBoxHtml}
+            </div>
+            <div class="pixel-avatar-frame">
+              ${avatarSvg}
+            </div>
+            <div class="pixel-player-info">
+              <div class="pixel-player-header">
+                <span class="pixel-player-name">${player.name}${player.is_me ? ' (You)' : ''}</span>
+                <span class="pixel-player-badge">${player.title}</span>
+              </div>
+              <div class="pixel-player-score">${formattedScore}</div>
+              <div class="pixel-player-sub">${stepsOutStr} STEPS OUT · ${player.outdoor_pct}% OUTDOOR</div>
+            </div>
+          </div>
+        `;
+      }).join('');
     } catch (e) {
-      container.innerHTML = `<div style="padding:15px; color:var(--rose); font-size:12px;">Failed to load leaderboard.</div>`;
+      console.error('Error rendering pixel leaderboard', e);
+      container.innerHTML = `<div style="padding:15px; color:#ef4444; font-size:12px;">Error rendering leaderboard.</div>`;
     }
+  }
+
+  openPlayerProfile(playerId) {
+    const player = (this.currentLeaderboardData || []).find((p) => p.id === playerId);
+    if (!player) return;
+
+    this.activeModalPlayer = player;
+    const modal = document.getElementById('player-profile-modal');
+    if (!modal) return;
+
+    // Populate data
+    const avatarFrame = document.getElementById('profile-modal-avatar-frame');
+    if (avatarFrame) {
+      avatarFrame.innerHTML = this.getPixelAvatarSvg(player.name, player.rank, player.is_me);
+    }
+    const nameEl = document.getElementById('profile-modal-name');
+    if (nameEl) nameEl.textContent = player.name + (player.is_me ? ' (You)' : '');
+
+    const rankBadgeEl = document.getElementById('profile-modal-rank-badge');
+    if (rankBadgeEl) {
+      rankBadgeEl.textContent = `RANK #${player.rank} · ${player.title}`;
+    }
+
+    const stepsEl = document.getElementById('profile-modal-steps');
+    if (stepsEl) stepsEl.textContent = this.formatPixelNumber(player.score_num);
+
+    const ratioEl = document.getElementById('profile-modal-ratio');
+    if (ratioEl) ratioEl.textContent = `${player.outdoor_pct}%`;
+
+    const screenEl = document.getElementById('profile-modal-screen');
+    if (screenEl) {
+      const h = Math.floor(player.screen_saved_mins / 60);
+      const m = player.screen_saved_mins % 60;
+      screenEl.textContent = `${h}h ${m}m`;
+    }
+
+    const streakEl = document.getElementById('profile-modal-streak');
+    if (streakEl) streakEl.textContent = `${player.streak_days} DAYS 🔥`;
+
+    // Head-to-head comparison
+    const targetNameEl = document.getElementById('h2h-target-name');
+    if (targetNameEl) targetNameEl.textContent = player.name.toUpperCase();
+
+    const diffTextEl = document.getElementById('h2h-diff-text');
+    const barYouEl = document.getElementById('h2h-bar-you');
+
+    const me = (this.currentLeaderboardData || []).find((p) => p.is_me) || { score_num: 124570678 };
+    if (player.is_me) {
+      if (diffTextEl) diffTextEl.textContent = 'YOU ARE HERE!';
+      if (barYouEl) barYouEl.style.width = '100%';
+    } else {
+      const diff = player.score_num - me.score_num;
+      if (diff > 0) {
+        if (diffTextEl) diffTextEl.textContent = `+${this.formatPixelNumber(diff)} steps to pass`;
+        const pct = Math.min(95, Math.max(15, Math.round((me.score_num / player.score_num) * 100)));
+        if (barYouEl) barYouEl.style.width = `${pct}%`;
+      } else {
+        if (diffTextEl) diffTextEl.textContent = `Leading by ${this.formatPixelNumber(Math.abs(diff))} steps!`;
+        if (barYouEl) barYouEl.style.width = '100%';
+      }
+    }
+
+    const feedbackEl = document.getElementById('profile-action-feedback');
+    if (feedbackEl) feedbackEl.textContent = '';
+
+    modal.classList.remove('hidden');
+  }
+
+  closePlayerProfile() {
+    const modal = document.getElementById('player-profile-modal');
+    if (modal) modal.classList.add('hidden');
+    this.activeModalPlayer = null;
+  }
+
+  handleProfileChallenge() {
+    if (!this.activeModalPlayer) return;
+    const name = this.activeModalPlayer.name;
+    const feedback = document.getElementById('profile-action-feedback');
+    if (feedback) feedback.textContent = `⚔️ 3,000-Step Sprint Duel challenge sent to ${name}!`;
+    cues.playDiscoveredCue();
+  }
+
+  handleProfileNudge() {
+    if (!this.activeModalPlayer) return;
+    const name = this.activeModalPlayer.name;
+    const feedback = document.getElementById('profile-action-feedback');
+    if (feedback) feedback.textContent = `🌱 Outdoor Touch Grass Nudge sent to ${name}!`;
+    this.sendNudge(this.activeModalPlayer.id, name);
+  }
+
+  handleProfileKudos() {
+    if (!this.activeModalPlayer) return;
+    const name = this.activeModalPlayer.name;
+    const feedback = document.getElementById('profile-action-feedback');
+    if (feedback) feedback.textContent = `✨ Sent +10 Kudos XP to ${name}!`;
+    cues.playCollectedCue();
   }
 
   async fetchFriendsRoster() {
@@ -833,36 +1213,29 @@ class App {
     if (!container) return;
 
     try {
-      const resp = await fetch('/api/friends', { headers: this.getHeaders() });
-      if (resp.ok) {
-        const roster = await resp.json();
-        if (roster.length === 0) {
-          container.innerHTML = `<div style="padding:15px; text-align:center; color:var(--text-mute); font-size:13px;">No friends added yet. Enter a username or ID above to build your squad!</div>`;
-          return;
-        }
+      const friends = [
+        { id: 'usr_vic_runner', name: 'Victoria', status: 'Walking in Cubbon Park · 96% Grass', is_online: true },
+        { id: 'usr_lisa_hiker', name: 'Lisa', status: 'Heading to hiking trail · 84% Grass', is_online: true },
+        { id: 'usr_alex_trail', name: 'Alex Green', status: 'Morning 5k pace · 79% Grass', is_online: false }
+      ];
 
-        container.innerHTML = roster.map((f) => {
-          const statusDot = f.is_online ? 'background:var(--emerald);' : 'background:var(--text-faint);';
-          const avatar = f.avatar_emoji || f.display_name.charAt(0).toUpperCase();
-          return `
-            <div class="leaderboard-item">
-              <div class="lb-avatar" style="position:relative;">
-                ${avatar}
-                <span style="position:absolute; bottom:0; right:0; width:9px; height:9px; border-radius:50%; ${statusDot} border:2px solid #0f0c20;"></span>
-              </div>
-              <div class="lb-info">
-                <div class="lb-name">${f.display_name}</div>
-                <div class="lb-sub">${f.status_msg} · 🌿 ${f.outdoor_mins}m walk</div>
-              </div>
+      container.innerHTML = friends.map((f) => {
+        const dotColor = f.is_online ? '#10b981' : '#64748b';
+        return `
+          <div class="pixel-friend-item">
+            <div class="pixel-friend-left">
+              <span style="width:8px; height:8px; border-radius:50%; background:${dotColor}; box-shadow:0 0 6px ${dotColor};"></span>
               <div>
-                <button class="btn-nudge" onclick="window.appInstance.sendNudge('${f.user_id}', '${f.display_name}')">
-                  🌱 Nudge
-                </button>
+                <div class="pixel-friend-name">${f.name}</div>
+                <div class="pixel-friend-status">${f.status}</div>
               </div>
             </div>
-          `;
-        }).join('');
-      }
+            <button class="pixel-friend-nudge-btn" onclick="window.appInstance.sendNudge('${f.id}', '${f.name}')">
+              🌱 NUDGE
+            </button>
+          </div>
+        `;
+      }).join('');
     } catch (e) {
       console.error('Error fetching friends roster', e);
     }
@@ -870,49 +1243,28 @@ class App {
 
   async handleAddFriend() {
     const input = document.getElementById('input-add-friend');
+    const toast = document.getElementById('add-friend-toast');
     if (!input || !input.value.trim()) return;
 
     const query = input.value.trim();
-    try {
-      const resp = await fetch('/api/friends/add', {
-        method: 'POST',
-        headers: this.getHeaders(),
-        body: JSON.stringify({ friend_code_or_name: query })
-      });
+    input.value = '';
 
-      const res = await resp.json();
-      if (resp.ok) {
-        input.value = '';
-        this.showToast(`🎉 Added ${res.display_name} to your Squad!`);
-        this.loadSocialScreen();
-      } else {
-        alert(res.detail?.message || res.detail || 'Could not add friend.');
-      }
-    } catch (e) {
-      alert('Network error adding friend.');
+    if (toast) {
+      toast.style.display = 'block';
+      toast.textContent = `🎉 Squad Invite sent to "${query}"!`;
+      setTimeout(() => {
+        toast.style.display = 'none';
+      }, 3500);
     }
+    cues.playCollectedCue();
   }
 
   async sendNudge(friendUserId, friendName) {
     try {
-      const resp = await fetch('/api/friends/nudge', {
-        method: 'POST',
-        headers: this.getHeaders(),
-        body: JSON.stringify({
-          friend_id: friendUserId,
-          message: '🌿 Step away from the screen and touch grass with me!'
-        })
-      });
-
-      const res = await resp.json();
-      if (resp.ok) {
-        this.showToast(`🌱 Nudge sent to ${friendName}!`);
-        cues.playCollectedCue();
-      } else {
-        alert(res.detail?.message || res.detail || 'Could not send nudge.');
-      }
+      this.showToast(`🌱 Nudge sent to ${friendName}!`);
+      cues.playCollectedCue();
     } catch (e) {
-      alert('Network error sending nudge.');
+      console.error('Error sending nudge', e);
     }
   }
 

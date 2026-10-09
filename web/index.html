@@ -6,7 +6,7 @@
   <title>OutLoot 🌿✦</title>
   <link rel="manifest" href="/manifest.json" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-  <link rel="stylesheet" href="/style.css" />
+  <link rel="stylesheet" href="/style.css?v=2.2" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script src="/assets/lottie.min.js"></script>
   <script src="/assets/walk_shoes_data.js"></script>
@@ -167,36 +167,147 @@
       </div>
     </div>
 
-    <!-- SCREEN 3: Live Leaderboard & Social -->
+    <!-- SCREEN 3: Live Pixel Leaderboard & Social -->
     <section id="screen-social" class="screen">
-      <div class="social-container">
-        <div>
-          <h2 style="font-size:24px; font-weight:800; letter-spacing:-0.5px;">Live Leaderboard</h2>
-          <p style="font-size:13px; color:var(--text-mute);">Real-time ranks based on outdoors walk time and grass score.</p>
+      <div class="pixel-social-container">
+        <!-- 1. Retro Pixel Trophy & Stacked Title Header matching reference image -->
+        <div class="pixel-lb-header">
+          <img src="/assets/trophy.png" alt="Trophy" class="pixel-lb-trophy-img" />
+          <h1 class="pixel-lb-title">
+            <span>Leader</span>
+            <span>board</span>
+          </h1>
         </div>
 
-        <div class="filter-pills-row">
-          <button id="filter-lb-global" class="filter-pill active">Global Walkers</button>
-          <button id="filter-lb-friends" class="filter-pill">Friends Squad</button>
+        <!-- 2. Gamified League & Season Banner -->
+        <div class="pixel-league-banner">
+          <div class="league-tag">🌿 EMERALD LEAGUE</div>
+          <div class="league-meta">TOP 3 PROMOTE TO DIAMOND IN 2D 14H</div>
         </div>
 
-        <!-- Add Friend Box -->
-        <div class="glass-input-row">
-          <input id="input-add-friend" class="glass-input-field" type="text" placeholder="Add friend by name or user ID..." />
-          <button id="btn-submit-add-friend" class="btn-small-pill">Add Friend</button>
+        <!-- 3. Primary Scope Selector: Global vs Friends (with user icons) -->
+        <div class="pixel-scope-tabs">
+          <button id="filter-lb-global" class="pixel-scope-btn active">
+            <img src="/assets/global_first.png" class="pixel-tab-icon" alt="Global" />
+            <span>GLOBAL TOP</span>
+          </button>
+          <button id="filter-lb-friends" class="pixel-scope-btn">
+            <img src="/assets/friend_first.png" class="pixel-tab-icon" alt="Friends" />
+            <span>FRIENDS SQUAD</span>
+          </button>
         </div>
 
-        <!-- Leaderboard Rows -->
-        <div id="leaderboard-container" class="leaderboard-list">
-          <!-- Populated by app.js -->
+        <!-- 4. Stat Category Filter Pills -->
+        <div class="pixel-metric-pills">
+          <button class="pixel-metric-btn active" data-metric="steps">
+            <img src="/assets/steps.png" class="pixel-metric-icon" alt="Steps" />
+            <span>STEPS</span>
+          </button>
+          <button class="pixel-metric-btn" data-metric="screen">
+            <img src="/assets/screen.png" class="pixel-metric-icon" alt="Screen" />
+            <span>SCREEN SAVED</span>
+          </button>
+          <button class="pixel-metric-btn" data-metric="target">
+            <img src="/assets/target.png" class="pixel-metric-icon" alt="Grass %" />
+            <span>GRASS %</span>
+          </button>
         </div>
 
-        <!-- Friends Squad Section -->
-        <div style="margin-top:10px;">
-          <h3 style="font-size:16px; font-weight:700; margin-bottom:10px; color:#fff;">Friends &amp; Nudges</h3>
-          <div id="friends-list-container" class="leaderboard-list">
-            <!-- Populated by app.js -->
+        <!-- 5. Squad Goal Mini-Quest Card -->
+        <div class="pixel-squad-goal-card">
+          <div class="squad-goal-header">
+            <span>DAILY SQUAD QUEST</span>
+            <span class="quest-reward">+50 PTS 🎁</span>
           </div>
+          <div class="squad-goal-bar-wrap">
+            <div class="squad-goal-bar-fill" style="width: 74%;"></div>
+          </div>
+          <div class="squad-goal-meta">
+            <span>37,000 / 50,000 STEPS</span>
+            <span>74% COMPLETE</span>
+          </div>
+        </div>
+
+        <!-- 6. Leaderboard Rows (Beveled Pixel Cards replicating reference image) -->
+        <div id="leaderboard-container" class="pixel-leaderboard-list">
+          <!-- Populated dynamically by app.js -->
+        </div>
+
+        <!-- 7. Add Friend Box -->
+        <div class="pixel-add-friend-box">
+          <div class="pixel-box-title">BUILD YOUR SQUAD</div>
+          <div class="pixel-input-row">
+            <input id="input-add-friend" class="pixel-input-field" type="text" placeholder="Enter username or ID..." />
+            <button id="btn-submit-add-friend" class="pixel-btn-action">+ ADD</button>
+          </div>
+          <div id="add-friend-toast" class="pixel-toast-msg"></div>
+        </div>
+
+        <!-- 8. Friends Squad Live Nudges -->
+        <div class="pixel-friends-section">
+          <div class="pixel-box-title">FRIENDS LIVE NUDGES</div>
+          <div id="friends-list-container" class="pixel-friends-list">
+            <!-- Populated dynamically by app.js -->
+          </div>
+        </div>
+      </div>
+
+      <!-- 9. Interactive Gamified Player Profile Modal -->
+      <div id="player-profile-modal" class="pixel-modal-backdrop hidden">
+        <div class="pixel-profile-card">
+          <button id="btn-close-profile" class="pixel-modal-close-btn" title="Close Profile">✕</button>
+          
+          <div class="profile-header-block">
+            <div id="profile-modal-avatar-frame" class="profile-avatar-frame">
+              <!-- Avatar inserted here -->
+            </div>
+            <h2 id="profile-modal-name" class="profile-name">Player</h2>
+            <div id="profile-modal-rank-badge" class="profile-rank-chip">RANK #1 · CHAMPION</div>
+          </div>
+
+          <div class="profile-stats-grid">
+            <div class="pixel-stat-box">
+              <div class="stat-label">TOTAL STEPS</div>
+              <div id="profile-modal-steps" class="stat-val">234 567</div>
+            </div>
+            <div class="pixel-stat-box">
+              <div class="stat-label">OUTDOOR %</div>
+              <div id="profile-modal-ratio" class="stat-val">98.4%</div>
+            </div>
+            <div class="pixel-stat-box">
+              <div class="stat-label">SCREEN SAVED</div>
+              <div id="profile-modal-screen" class="stat-val">8h 20m</div>
+            </div>
+            <div class="pixel-stat-box">
+              <div class="stat-label">STREAK</div>
+              <div id="profile-modal-streak" class="stat-val">7 DAYS 🔥</div>
+            </div>
+          </div>
+
+          <!-- Head-to-Head Comparison -->
+          <div class="profile-h2h-box">
+            <div class="h2h-header">
+              <span>YOU VS <span id="h2h-target-name">PLAYER</span></span>
+              <span id="h2h-diff-text">+1,420 steps to pass</span>
+            </div>
+            <div class="h2h-bar-track">
+              <div id="h2h-bar-you" class="h2h-bar-you" style="width: 55%;"></div>
+            </div>
+          </div>
+
+          <!-- Gamified Actions -->
+          <div class="profile-actions-row">
+            <button id="btn-profile-challenge" class="pixel-action-btn primary">
+              <span>⚔️</span> DUEL
+            </button>
+            <button id="btn-profile-nudge" class="pixel-action-btn secondary">
+              <span>🌱</span> NUDGE
+            </button>
+            <button id="btn-profile-kudos" class="pixel-action-btn accent">
+              <span>✨</span> +10 XP
+            </button>
+          </div>
+          <div id="profile-action-feedback" class="profile-feedback-text"></div>
         </div>
       </div>
     </section>
@@ -413,6 +524,6 @@
     </nav>
   </div>
 
-  <script type="module" src="/app.js"></script>
+  <script type="module" src="/app.js?v=2.2"></script>
 </body>
 </html>
