@@ -8,7 +8,7 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from server.db import get_db, init_db
-from server.routers import admin, auth, items, market, points, session
+from server.routers import admin, ai, auth, items, market, points, session
 from server.schemas import ErrorResponse, HealthResponse
 from server.settings import get_settings
 
@@ -55,6 +55,7 @@ app.include_router(items.router)
 app.include_router(points.router)
 app.include_router(market.router)
 app.include_router(admin.router)
+app.include_router(ai.router)
 
 
 @app.get("/api/health", response_model=HealthResponse)
