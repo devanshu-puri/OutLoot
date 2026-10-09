@@ -6,7 +6,7 @@
   <title>OutLoot 🌿✦</title>
   <link rel="manifest" href="/manifest.json" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-  <link rel="stylesheet" href="/style.css?v=2.2" />
+  <link rel="stylesheet" href="/style.css?v=2.3" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script src="/assets/lottie.min.js"></script>
   <script src="/assets/walk_shoes_data.js"></script>
@@ -191,28 +191,7 @@
           </button>
         </div>
 
-        <!-- 3. Stat Category Filter Pills -->
-        <div class="pixel-metric-pills">
-          <button class="pixel-metric-btn active" data-metric="steps">
-            <img src="/assets/steps.png" class="pixel-metric-icon" alt="Steps" />
-            <span>STEPS</span>
-          </button>
-          <button class="pixel-metric-btn" data-metric="screen">
-            <img src="/assets/screen.png" class="pixel-metric-icon" alt="Screen" />
-            <span>SCREEN SAVED</span>
-          </button>
-          <button class="pixel-metric-btn" data-metric="target">
-            <img src="/assets/target.png" class="pixel-metric-icon" alt="Grass %" />
-            <span>GRASS %</span>
-          </button>
-        </div>
-
-        <!-- 4. Leaderboard Rows (Beveled Pixel Cards replicating reference image) -->
-        <div id="leaderboard-container" class="pixel-leaderboard-list">
-          <!-- Populated dynamically by app.js -->
-        </div>
-
-        <!-- 5. Add Friend Box -->
+        <!-- 3. Add Friend Box -->
         <div class="pixel-add-friend-box">
           <div class="pixel-box-title">ADD FRIEND</div>
           <div class="pixel-input-row">
@@ -220,6 +199,11 @@
             <button id="btn-submit-add-friend" class="pixel-btn-action">+ ADD</button>
           </div>
           <div id="add-friend-toast" class="pixel-toast-msg"></div>
+        </div>
+
+        <!-- 4. Leaderboard Rows (Beveled Pixel Cards replicating reference image) -->
+        <div id="leaderboard-container" class="pixel-leaderboard-list">
+          <!-- Populated dynamically by app.js -->
         </div>
 
         <!-- 8. Friends Squad Live Nudges -->
