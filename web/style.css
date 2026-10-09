@@ -982,8 +982,10 @@ html, body {
   padding: 24px;
 }
 
-.touch-grass-modal-backdrop.active {
-  display: flex;
+.touch-grass-modal-backdrop.active,
+.touch-grass-modal-backdrop.visible,
+.touch-grass-modal-backdrop[style*="block"] {
+  display: flex !important;
 }
 
 .touch-grass-modal {

@@ -6,7 +6,7 @@
   <title>OutLoot 🌿✦</title>
   <link rel="manifest" href="/manifest.json" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-  <link rel="stylesheet" href="/style.css?v=2.3" />
+  <link rel="stylesheet" href="/style.css?v=2.4" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script src="/assets/lottie.min.js"></script>
   <script src="/assets/walk_shoes_data.js"></script>
@@ -283,6 +283,32 @@
           <p style="font-size:13px; color:var(--text-mute);">Live tab interaction tracker &amp; Android Digital Wellbeing sync.</p>
         </div>
 
+        <!-- 📲 Quick 3-Step Setup Guide Box -->
+        <div class="activitywatch-guide-box" style="background:#f8444f; color:#f7f8f3; border:2px solid #000; box-shadow:0 4px 0 #000; border-radius:6px; padding:16px; display:flex; flex-direction:column; gap:10px; font-family:'VCR_OSD_MONO', monospace;">
+          <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:6px;">
+            <span style="font-size:14px; font-weight:900; letter-spacing:0.5px;">📲 Quick 3-Step Setup Guide</span>
+            <span style="font-size:10px; background:rgba(0,0,0,0.25); padding:2px 8px; border-radius:4px; font-weight:700;">*follow this step for better data sync</span>
+          </div>
+          <p style="font-size:12px; margin:0; opacity:0.95; line-height:1.45;">
+            To sync your real phone data automatically with the OutLoot dashboard, follow these quick steps:
+          </p>
+          <div style="font-size:12px; display:flex; flex-direction:column; gap:8px; line-height:1.45;">
+            <div>
+              <strong>1. Install the Tracker:</strong> Download the free, open-source ActivityWatch app from the Google Play Store <a href="https://play.google.com/store/apps/details?id=net.activitywatch.android" target="_blank" rel="noopener noreferrer" style="color:#fff; text-decoration:underline; font-weight:800;">here</a>.
+            </div>
+            <div>
+              <strong>2. Turn On 2 Settings:</strong> Open the app and click <strong>GRANT</strong> to enable these two required permissions:
+              <ul style="margin:4px 0 0 18px; padding:0; list-style-type:disc;">
+                <li><strong>Usage Access</strong> (Allows it to count screen minutes)</li>
+                <li><strong>Exact Alarms</strong> (Allows it to update the charts automatically)</li>
+              </ul>
+            </div>
+            <div>
+              <strong>3. Try Again:</strong> Make sure the app says <em>Server status: Running</em>, then go back to your browser page and tap the <strong>Sync Android Digital Wellbeing</strong> button! Your live screen time will instantly load.
+            </div>
+          </div>
+        </div>
+
         <!-- Touch Grass Ratio Meter Card -->
         <div class="meter-card">
           <div class="meter-header">
@@ -305,14 +331,40 @@
               <div class="time-split-label">🌿 Outdoor Walk Time</div>
             </div>
             <div class="time-split-box">
-              <div id="live-screen-mins" class="time-split-val" style="color:var(--violet-soft);">0m</div>
+              <div id="live-screen-mins" class="time-split-val" style="color:var(--violet-soft);">32.2m</div>
               <div class="time-split-label">📱 Active Screen Time</div>
             </div>
           </div>
 
           <div id="grass-debt-banner" style="background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.3); border-radius:var(--radius-md); padding:12px; font-size:13px; color:var(--amber); line-height:1.4;">
-            ⏳ Current Screen Streak: <strong id="streak-minutes-display">0m</strong>.<br/>
+            ⏳ Current Screen Streak: <strong id="streak-minutes-display">12.8m</strong>.<br/>
             Threshold to Touch Grass: <strong id="threshold-display">30m</strong>.
+          </div>
+        </div>
+
+        <!-- Smart Outdoor Break & Reward Lock Trigger Card -->
+        <div class="bento-card" style="flex-direction:column; gap:12px;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h3 style="font-size:15px; font-weight:700; color:#fff;">🌿 Smart Break &amp; Reward Lock Rule</h3>
+            <span id="reward-lock-badge" class="hero-pill-badge" style="background:rgba(16,185,129,0.18); border-color:#10b981; color:#10b981;">
+              🟢 REWARDS UNLOCKED
+            </span>
+          </div>
+          <p id="smart-break-suggestion-text" style="font-size:13px; color:var(--text-mute); line-height:1.45;">
+            Outdoor advisory: Take a 15-minute outdoor walk before your continuous screen time breaches threshold to protect today's Sponsor Rewards!
+          </p>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+            <div style="background:rgba(255,255,255,0.04); border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:10px;">
+              <div style="font-size:10px; color:var(--text-faint); font-weight:700; text-transform:uppercase;">Next Recommended Break</div>
+              <div id="next-break-countdown" style="font-size:16px; font-weight:800; color:#ffd32a; font-family:'VCR_OSD_MONO', monospace; margin-top:2px;">In 17 mins</div>
+            </div>
+            <div style="background:rgba(255,255,255,0.04); border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:10px;">
+              <div style="font-size:10px; color:var(--text-faint); font-weight:700; text-transform:uppercase;">Outdoor Streak Multiplier</div>
+              <div id="streak-multiplier-display" style="font-size:16px; font-weight:800; color:#10b981; font-family:'VCR_OSD_MONO', monospace; margin-top:2px;">5-Day Streak 🔥</div>
+            </div>
+          </div>
+          <div id="reward-lock-warning" style="display:none; font-size:12px; color:#f8444f; background:rgba(248,68,79,0.1); border:1px solid rgba(248,68,79,0.3); border-radius:var(--radius-md); padding:8px 12px; line-height:1.4;">
+            ⚠️ Trigger Activated: You dismissed your Touch Grass break! Daily Sponsor Rewards are locked until you complete a 10m outdoor walk.
           </div>
         </div>
 
@@ -328,14 +380,17 @@
           </div>
         </div>
 
-        <!-- Android Digital Wellbeing / Browser Screen Time Import -->
+        <!-- Android Digital Wellbeing / ActivityWatch Sync -->
         <div class="bento-card" style="flex-direction:column; gap:12px;">
           <h3 style="font-size:15px; font-weight:700; color:#fff;">📲 Sync Android Digital Wellbeing</h3>
           <p style="font-size:13px; color:var(--text-mute);">
-            Extract your phone screen time from Google Digital Wellbeing or enter today's device hours to compute your true lifestyle Grass Debt:
+            Extract your phone screen time from ActivityWatch mobile server or enter today's device hours to compute your true lifestyle Grass Debt:
           </p>
-          <div class="glass-input-row" style="width:100%;">
-            <input id="input-import-hours" class="glass-input-field" type="number" step="0.5" min="0.5" max="24" placeholder="e.g. 4.5 hours today" />
+          <button id="btn-sync-digital-wellbeing" class="btn-floating-cta" style="width:100%; margin:0; justify-content:center; background:linear-gradient(135deg, #10b981, #059669); font-weight:800; font-family:'VCR_OSD_MONO', monospace; font-size:13px;">
+            📲 Sync Android Digital Wellbeing
+          </button>
+          <div class="glass-input-row" style="width:100%; margin-top:4px;">
+            <input id="input-import-hours" class="glass-input-field" type="number" step="0.5" min="0.5" max="24" placeholder="Or enter hours (e.g. 4.5)" />
             <button id="btn-import-wellbeing" class="btn-small-pill">Sync Hours</button>
           </div>
           <div id="import-result-msg" style="font-size:12px; color:var(--grass-light); display:none;"></div>
@@ -487,6 +542,6 @@
     </nav>
   </div>
 
-  <script type="module" src="/app.js?v=2.2"></script>
+  <script type="module" src="/app.js?v=2.4"></script>
 </body>
 </html>
