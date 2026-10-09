@@ -8,7 +8,7 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from server.db import get_db, init_db
-from server.routers import auth
+from server.routers import auth, session
 from server.schemas import ErrorResponse, HealthResponse
 from server.settings import get_settings
 
@@ -48,8 +48,9 @@ async def custom_http_exception_handler(request: Request, exc: HTTPException):
     )
 
 
-# Include Auth Router
+# Include Routers
 app.include_router(auth.router)
+app.include_router(session.router)
 
 
 @app.get("/api/health", response_model=HealthResponse)

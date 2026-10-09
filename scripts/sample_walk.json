@@ -1,0 +1,21 @@
+[
+  {"t": 1728500000.0, "lat": 13.08270, "lon": 80.27070, "accuracy_m": 4.5, "note": "start"},
+  {"t": 1728500005.0, "lat": 13.08276, "lon": 80.27070, "accuracy_m": 4.2, "note": "walk step 1"},
+  {"t": 1728500010.0, "lat": 13.08282, "lon": 80.27070, "accuracy_m": 3.8, "note": "walk step 2"},
+  {"t": 1728500015.0, "lat": 13.08288, "lon": 80.27071, "accuracy_m": 4.0, "note": "walk step 3"},
+  {"t": 1728500020.0, "lat": 13.08294, "lon": 80.27071, "accuracy_m": 3.5, "note": "walk step 4"},
+  {"t": 1728500025.0, "lat": 13.08300, "lon": 80.27072, "accuracy_m": 3.9, "note": "walk step 5"},
+  {"t": 1728500030.0, "lat": 13.08306, "lon": 80.27072, "accuracy_m": 4.1, "note": "walk step 6"},
+  {"t": 1728500035.0, "lat": 13.08312, "lon": 80.27073, "accuracy_m": 3.7, "note": "walk step 7"},
+  {"t": 1728500040.0, "lat": 13.08312, "lon": 80.27073, "accuracy_m": 4.5, "note": "stationary rest 1"},
+  {"t": 1728500045.0, "lat": 13.08312, "lon": 80.27073, "accuracy_m": 4.8, "note": "stationary rest 2"},
+  {"t": 1728500050.0, "lat": 13.08318, "lon": 80.27074, "accuracy_m": 3.6, "note": "resumed walk 1"},
+  {"t": 1728500055.0, "lat": 13.08324, "lon": 80.27075, "accuracy_m": 3.9, "note": "resumed walk 2"},
+  {"t": 1728500060.0, "lat": 13.08450, "lon": 80.27200, "accuracy_m": 5.0, "note": "GPS glitch jump"},
+  {"t": 1728500065.0, "lat": 13.08330, "lon": 80.27076, "accuracy_m": 3.5, "note": "recovered walk 1"},
+  {"t": 1728500070.0, "lat": 13.08336, "lon": 80.27077, "accuracy_m": 3.8, "note": "recovered walk 2"},
+  {"t": 1728500075.0, "lat": 13.08342, "lon": 80.27078, "accuracy_m": 4.0, "note": "walk step 8"},
+  {"t": 1728500080.0, "lat": 13.08348, "lon": 80.27079, "accuracy_m": 3.6, "note": "walk step 9"},
+  {"t": 1728500085.0, "lat": 13.08354, "lon": 80.27080, "accuracy_m": 4.2, "note": "walk step 10"},
+  {"t": 1728500090.0, "lat": 13.08360, "lon": 80.27081, "accuracy_m": 3.7, "note": "walk step 11"}
+]

@@ -21,7 +21,6 @@ def create_connection(db_path: Optional[Path] = None) -> sqlite3.Connection:
     conn = sqlite3.connect(
         str(db_path),
         timeout=30.0,
-        detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES,
         check_same_thread=False
     )
     conn.row_factory = sqlite3.Row
