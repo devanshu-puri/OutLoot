@@ -1,0 +1,103 @@
+app:
+  name: "TG Trails"
+  version: "0.1.0"
+  demo_mode: false
+
+movement:
+  cycle_required_s: 300
+  demo_cycle_required_s: 20
+  min_displacement_m: 75.0
+  max_gap_s: 30.0
+  max_accuracy_m: 30.0
+  min_walk_speed_mps: 0.5
+  max_walk_speed_mps: 3.5
+  impossible_speed_mps: 12.0
+  noise_floor_m: 3.0
+  max_skew_s: 60.0
+
+spawn:
+  spawn_min_m: 80.0
+  spawn_max_m: 250.0
+  min_separation_m: 50.0
+  collect_radius_m: 30.0
+  retry_cooldown_s: 5.0
+
+limits:
+  max_collections_per_session: 12
+  max_points_per_session: 600
+  max_points_per_day: 1500
+  max_session_duration_s: 10800
+  raw_samples_keep_count: 200
+  raw_samples_ttl_days: 7
+
+items:
+  - id: "item_common"
+    name: "Clover Sprout"
+    category: "nature"
+    rarity: "common"
+    base_points: 10
+    weight: 50
+    active: true
+    description: "A fresh green sprout picked along the path."
+  - id: "item_uncommon"
+    name: "Dew Crystal"
+    category: "nature"
+    rarity: "uncommon"
+    base_points: 25
+    weight: 28
+    active: true
+    description: "Morning condensation glistening on a quiet trail."
+  - id: "item_rare"
+    name: "Ancient Oak Acorn"
+    category: "nature"
+    rarity: "rare"
+    base_points: 60
+    weight: 14
+    active: true
+    description: "A resilient seed from an elder tree."
+  - id: "item_epic"
+    name: "Phosphor Bloom"
+    category: "flora"
+    rarity: "epic"
+    base_points: 120
+    weight: 6
+    active: true
+    description: "A rare wild bloom that hums with gentle bioluminescence."
+  - id: "item_special"
+    name: "Wanderer's Compass"
+    category: "artifact"
+    rarity: "special"
+    base_points: 200
+    weight: 0
+    active: true
+    description: "A storied compass for festival walkers."
+
+rewards:
+  - id: "rew_cafe_discount"
+    title: "5% Trailhead Café Discount"
+    description: "Enjoy 5% off your next warm coffee or fresh brew at participating local partner kiosks. (Demo voucher)"
+    cost_points: 100
+    stock: 50
+    state: "ACTIVE"
+    terms: "Demo code. Non-monetary, single-use promotional credit."
+  - id: "rew_beverage"
+    title: "Free Trail Beverage"
+    description: "Claim one complimentary hydrating cooler or artisan tea. (Demo voucher)"
+    cost_points: 350
+    stock: 20
+    state: "ACTIVE"
+    terms: "Demo code. Valid at sample partner stands."
+  - id: "rew_sticker_pack"
+    title: "TG Trails Eco Sticker Pack"
+    description: "Custom holographic outdoor sticker pack shipped directly to your door. (Demo reward)"
+    cost_points: 600
+    stock: 3
+    state: "ACTIVE"
+    terms: "Demo code. Limited run merchandise."
+  - id: "rew_activity_voucher"
+    title: "Outdoor Activity Day Pass"
+    description: "One-day access to partner nature reserves and climbing park amenities. (Demo reward)"
+    cost_points: 1500
+    stock: 1
+    state: "ACTIVE"
+    terms: "Demo code. Sponsored community pass."

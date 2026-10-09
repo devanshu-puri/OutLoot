@@ -1,0 +1,98 @@
+[
+  {
+    "title": "Morning Canopy Scout",
+    "description": "Walk along the shaded pathway and notice three different tree species or overhead branch patterns.",
+    "est_minutes": 15,
+    "intensity": "easy",
+    "tip": "Keep your head up and listen for local bird calls in the canopy.",
+    "item_lore": "Forest scouts say ancient saplings leave behind dew drops imbued with the sunrise."
+  },
+  {
+    "title": "Breeze Seeker",
+    "description": "Pace steadily along an open stretch of public walkway and feel the wind direction shift.",
+    "est_minutes": 20,
+    "intensity": "moderate",
+    "tip": "Maintain a smooth, rhythmic cadence on level pavement.",
+    "item_lore": "Wandering gusts often carry forgotten relics across open meadows."
+  },
+  {
+    "title": "Green Ribbon Stride",
+    "description": "Follow a continuous park trail or green corridor without stopping for at least 10 minutes.",
+    "est_minutes": 15,
+    "intensity": "easy",
+    "tip": "Focus on relaxed posture and deep breathing as you move.",
+    "item_lore": "Continuous strides align your rhythm with the pulse of the trail."
+  },
+  {
+    "title": "Stone & Shadow Trail",
+    "description": "Observe how building shadows and cobblestones map out natural walking corridors in your neighborhood.",
+    "est_minutes": 25,
+    "intensity": "moderate",
+    "tip": "Stay alert at road crossings and stick to public pedestrian footpaths.",
+    "item_lore": "Ancient paths were etched by countless generations of curious footsteps."
+  },
+  {
+    "title": "Lakeside Reflection",
+    "description": "Take a calm walk near water, fountains, or park wetlands while absorbing the surrounding tranquility.",
+    "est_minutes": 20,
+    "intensity": "easy",
+    "tip": "Let your gaze relax on the water's surface as you stroll past.",
+    "item_lore": "Dew crystals form where humid lake breezes touch wild grasses."
+  },
+  {
+    "title": "Flora Explorer",
+    "description": "Count 5 distinct flowering bushes or wild grass patches blooming alongside the route.",
+    "est_minutes": 15,
+    "intensity": "easy",
+    "tip": "Enjoy the colors without stepping into fenced or delicate plant beds.",
+    "item_lore": "Phosphor blooms are said to ignite when surrounded by diverse wildflowers."
+  },
+  {
+    "title": "Tempo Builder",
+    "description": "Alternate 3 minutes of brisk walking with 2 minutes of relaxed walking across your route.",
+    "est_minutes": 25,
+    "intensity": "moderate",
+    "tip": "Keep your arms swinging naturally to power your uphill strides.",
+    "item_lore": "Dynamic pacers uncover trails where hidden caches settle quietly."
+  },
+  {
+    "title": "Sunset Horizon Loop",
+    "description": "Walk toward the golden glow of the dusk horizon on safe, well-lit pedestrian sidewalks.",
+    "est_minutes": 20,
+    "intensity": "easy",
+    "tip": "Enjoy the cooling evening temperature after daytime heat.",
+    "item_lore": "Evening glow recharges natural waystones placed along traveler routes."
+  },
+  {
+    "title": "Rhythm of the City Park",
+    "description": "Do a full loop around your favorite local public park green.",
+    "est_minutes": 30,
+    "intensity": "moderate",
+    "tip": "Find a steady cadence that allows effortless conversation.",
+    "item_lore": "Park keepers tell legends of clover sprouts multiplying near steady walkers."
+  },
+  {
+    "title": "Quiet Footsteps",
+    "description": "Practice gentle foot strikes while walking across paved and unpaved public pathways.",
+    "est_minutes": 15,
+    "intensity": "easy",
+    "tip": "Roll your foot smoothly from heel to toe for low-impact walking.",
+    "item_lore": "Stealthy steps preserve the delicate balance of trail wildlife."
+  },
+  {
+    "title": "Urban Oasis Journey",
+    "description": "Seek out pockets of greenery nestled between urban architecture and modern roads.",
+    "est_minutes": 25,
+    "intensity": "moderate",
+    "tip": "Keep earphones at low volume so ambient sounds remain clear.",
+    "item_lore": "Even amidst concrete, green resilient seeds find a way to thrive."
+  },
+  {
+    "title": "Curious Wanderer",
+    "description": "Pick a fork in your usual path that you haven't explored this week and follow it safely.",
+    "est_minutes": 20,
+    "intensity": "moderate",
+    "tip": "Always prioritize well-lit, public routes and stay aware of your surroundings.",
+    "item_lore": "The compass never points backwards—every new route reveals fresh discoveries."
+  }
+]
