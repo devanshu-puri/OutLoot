@@ -2,14 +2,238 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>TG Trails / OutLoot</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>TG Trails — OutLoot</title>
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <link rel="stylesheet" href="/style.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 </head>
 <body>
-  <div id="app">
-    <h1>TG Trails</h1>
-    <p>Walk outside. Unearth items. Earn rewards.</p>
+  <div id="app-container">
+    <!-- Top Navigation Header -->
+    <header class="top-nav">
+      <div class="brand-title">
+        <span class="brand-dot"></span>
+        TG Trails
+      </div>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <button id="sim-toggle-btn" class="sim-toggle-btn" title="Toggle simulation mode for desk testing">
+          SIM MODE
+        </button>
+        <div id="user-points-display" class="points-badge">
+          0 pts
+        </div>
+      </div>
+    </header>
+
+    <!-- SCREEN 1: Welcome / Permissions -->
+    <section id="screen-welcome" class="screen active">
+      <div class="welcome-hero">
+        <span class="welcome-badge">Hacktoberfest 2026</span>
+        <h1 class="welcome-title">Walk outside.<br/>Unearth drops.<br/>Earn rewards.</h1>
+        <p class="welcome-subtitle">
+          Real movement powers your progress. Local open-weight AI crafts your journey.
+        </p>
+      </div>
+
+      <div class="welcome-body">
+        <div class="explainer-card">
+          <div class="explainer-item">
+            <div class="explainer-icon">🚶</div>
+            <div class="explainer-text">
+              <h4>Server-Validated Motion</h4>
+              <p>Items unlock through genuine pedestrian movement, not app screen time.</p>
+            </div>
+          </div>
+          <div class="explainer-item">
+            <div class="explainer-icon">🤖</div>
+            <div class="explainer-text">
+              <h4>Local Gemma AI Missions</h4>
+              <p>A private local model writes missions and item lore that never leave your device.</p>
+            </div>
+          </div>
+          <div class="explainer-item">
+            <div class="explainer-icon">🎁</div>
+            <div class="explainer-text">
+              <h4>Demo Partner Marketplace</h4>
+              <p>Redeem non-cash gameplay points for exclusive sponsor discount vouchers.</p>
+            </div>
+          </div>
+        </div>
+
+        <button id="btn-start-walk" class="btn-hero-pill" style="width:100%;">
+          Allow Location &amp; Start Walk
+        </button>
+
+        <p class="privacy-notice">
+          🔒 Privacy commitment: Raw GPS samples are retained temporarily only to verify pedestrian pace and auto-purged on session end.
+        </p>
+      </div>
+    </section>
+
+    <!-- SCREEN 2: Map & Active Walk HUD -->
+    <section id="screen-map" class="screen">
+      <div class="map-screen-wrapper">
+        <div id="map"></div>
+
+        <!-- HUD Top Status Chip -->
+        <div class="hud-overlay">
+          <div class="hud-top-chip">
+            <div id="hud-status-indicator" class="status-indicator"></div>
+            <span id="hud-status-text" class="status-chip-text">ACTIVE WALK</span>
+          </div>
+
+          <!-- One-Glance Center HUD Card -->
+          <div class="one-glance-hud">
+            <div class="progress-ring-container">
+              <svg class="progress-ring">
+                <circle class="progress-ring-circle-bg" cx="40" cy="40" r="35" />
+                <circle id="ring-progress-bar" class="progress-ring-circle" cx="40" cy="40" r="35" />
+              </svg>
+              <div class="progress-ring-center">
+                <span id="hud-countdown-text" class="ring-countdown">0:20</span>
+              </div>
+            </div>
+
+            <div class="hud-info">
+              <h3 id="hud-headline-text" class="hud-headline">Next Item Drop</h3>
+              <p id="hud-subtext-text" class="hud-subtext">Walk steadily on public paths</p>
+            </div>
+          </div>
+
+          <!-- Active AI Mission Card Container -->
+          <div id="active-mission-card-container" style="pointer-events:auto;"></div>
+        </div>
+
+        <!-- Walk Mode Screen Dimmer Overlay -->
+        <div id="walk-mode-dimmer" class="walk-mode-dimmer">
+          <div style="font-size:40px;">🚶</div>
+          <div id="dimmer-countdown-text" class="dimmer-big-text">WALK IN PROGRESS</div>
+          <p class="dimmer-tap-hint">Screen dimmed to save battery. Keep walking outside — audio and vibration cues will alert you on item discovery. Tap screen to wake.</p>
+        </div>
+
+        <!-- HUD Bottom Controls -->
+        <div class="hud-bottom-controls">
+          <button id="btn-pause-walk" class="hud-btn">Pause</button>
+          <button id="btn-end-walk" class="hud-btn" style="border-color:#f43f5e; color:#f43f5e;">End Walk</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Bottom Collect Sheet -->
+    <div id="collect-sheet" class="collect-sheet">
+      <div class="sheet-handle"></div>
+      <div class="sheet-header">
+        <h2 id="sheet-item-name" class="sheet-title">Clover Sprout</h2>
+        <span id="sheet-item-badge" class="item-badge common">COMMON · +10 PTS</span>
+      </div>
+      <p id="sheet-item-lore" class="sheet-lore">"A fresh green sprout picked along the path."</p>
+      <div id="sheet-status-message" class="sheet-status-message">
+        Walk within 30 meters of marker to collect.
+      </div>
+      <div style="display:flex; gap:8px; margin-top:8px;">
+        <button id="btn-collect-action" class="btn-hero-pill" style="flex:2;">
+          ✦ Collect Drop
+        </button>
+        <button id="btn-close-sheet" class="hud-btn" style="flex:1; background:var(--canvas-soft); color:var(--ink);">
+          Dismiss
+        </button>
+      </div>
+    </div>
+
+    <!-- SCREEN 3: Marketplace -->
+    <section id="screen-rewards" class="screen">
+      <div class="marketplace-container">
+        <div>
+          <h2 style="font-size:24px; font-weight:700; letter-spacing:-0.5px;">Sponsor Rewards</h2>
+          <p style="font-size:13px; color:var(--ink-mute);">Redeem your earned walk points for demo sponsor vouchers.</p>
+        </div>
+        <div id="rewards-grid" class="rewards-grid">
+          <!-- Populated by app.js -->
+        </div>
+      </div>
+    </section>
+
+    <!-- SCREEN 4: Me / History -->
+    <section id="screen-me" class="screen">
+      <div class="marketplace-container">
+        <div style="background:var(--primary); color:#fff; padding:var(--sp-lg); border-radius:var(--r-lg);">
+          <div style="font-size:12px; color:var(--on-dark-mute); text-transform:uppercase;">Authoritative Ledger Balance</div>
+          <div id="me-balance-display" style="font-size:32px; font-weight:700; font-family:'JetBrains Mono',monospace; color:var(--violet-soft); margin-top:4px;">
+            0 pts
+          </div>
+        </div>
+
+        <div>
+          <h3 style="font-size:16px; font-weight:700; margin-bottom:8px;">My Redeemed Vouchers</h3>
+          <div id="me-voucher-codes">
+            <!-- Populated by app.js -->
+          </div>
+        </div>
+
+        <div>
+          <h3 style="font-size:16px; font-weight:700; margin-bottom:8px;">Recent Point Transactions</h3>
+          <div id="me-history-list" class="history-list" style="padding:0;">
+            <!-- Populated by app.js -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SCREEN 5: End of Session Summary Band (Deep Teal #0e3030) -->
+    <section id="screen-summary" class="screen">
+      <div class="summary-screen">
+        <div class="summary-hero-text">
+          <span class="welcome-badge" style="background:rgba(255,255,255,0.15); color:#fff; border:none; align-self:center;">Walk Summary</span>
+          <h1 class="summary-title">Walk Completed!</h1>
+          <p class="summary-subtitle">Here is your verified outdoors vs screen time breakdown.</p>
+        </div>
+
+        <div class="summary-stats-grid">
+          <div class="stat-card">
+            <span id="sum-outdoor-time" class="stat-value">14 min</span>
+            <span class="stat-label">🌿 Outside Time</span>
+          </div>
+          <div class="stat-card">
+            <span id="sum-screen-time" class="stat-value">2m 10s</span>
+            <span class="stat-label">📱 Active Screen Time</span>
+          </div>
+          <div class="stat-card">
+            <span id="sum-dist" class="stat-value">1,120 m</span>
+            <span class="stat-label">🚶 Distance Walked</span>
+          </div>
+          <div class="stat-card">
+            <span id="sum-pts" class="stat-value">+95 pts</span>
+            <span class="stat-label">🏆 Points Earned</span>
+          </div>
+        </div>
+
+        <div id="summary-mission-card"></div>
+
+        <button class="btn-teal" onclick="window.appInstance.showScreen('screen-rewards')">
+          Explore Sponsor Rewards →
+        </button>
+      </div>
+    </section>
+
+    <!-- Bottom Navigation Bar -->
+    <nav class="bottom-tabs">
+      <button class="tab-btn active" data-screen="screen-map">
+        <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+        Map
+      </button>
+      <button class="tab-btn" data-screen="screen-rewards">
+        <svg viewBox="0 0 24 24"><path d="M20 6h-2.18c.11-.31.18-.65.18-1 0-1.66-1.34-3-3-3-1.05 0-1.96.54-2.5 1.35l-.5.67-.5-.68C10.96 2.54 10.05 2 9 2 7.34 2 6 3.34 6 5c0 .35.07.69.18 1H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-5-2c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zM9 4c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm11 15H4v-2h16v2zm0-5H4V8h5.08L7 10.83 8.62 12 11 8.76V8h2v.76L15.38 12 17 10.83 14.92 8H20v6z"/></svg>
+        Rewards
+      </button>
+      <button class="tab-btn" data-screen="screen-me">
+        <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+        Me
+      </button>
+    </nav>
   </div>
+
+  <script type="module" src="/app.js"></script>
 </body>
 </html>
