@@ -82,10 +82,10 @@
 - [x] T5.7 Integration test suite `tests/verify_mvp2.py` verifying all 11 user workflows end-to-end — 100% green (2026-10-09 22:19)
 
 ## PHASE P6 — Submission & Documentation (M10) — see SUBMISSION.md
-- [ ] T6.1 README & Documentation update: setup/run/test, Android screen time extraction guide, sponsor integrations table
+- [x] T6.1 README & Documentation update: setup/run/test, Android screen time extraction guide, sponsor integrations table
 - [ ] T6.2 Export agent session (DevRelay/Entire) and embed with `{% agent_session ID %}`
-- [ ] T6.3 Submission draft for DEV Challenge (deadline Oct 11 midday IST)
-- [ ] T6.4 Add code repo link + video demo link; double-check tags `#devchallenge #hf26challenge`
+- [x] T6.3 Submission draft for DEV Challenge staged on DEV via DevRelay (Draft ID: 4824791) — completed (2026-10-09 23:04)
+- [x] T6.4 Push repository to GitHub: https://github.com/devanshu-puri/OutLoot with tags #devchallenge #touchgrass #hf26challenge #opensource — completed (2026-10-09 23:04)
 
 ## MANUAL E2E CHECKLIST (sim mode)
 - [ ] Start session → HUD shows ACTIVE · [ ] sim walk advances progress ring · [ ] stationary stretch pauses ring
