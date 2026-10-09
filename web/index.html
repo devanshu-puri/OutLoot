@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>TG Trails — OutLoot 🌿✦</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>OutLoot 🌿✦</title>
   <link rel="manifest" href="/manifest.json" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
   <link rel="stylesheet" href="/style.css" />
@@ -13,24 +13,17 @@
 </head>
 <body>
   <div id="app-container">
-    <!-- Top Navigation Header with Center Notch -->
+    <!-- Clean, Uncongested Header: OutLoot Brand + SIM Symbol + Points -->
     <header class="top-nav">
       <div class="brand-title">
         <span class="brand-dot"></span>
-        TG Trails
-      </div>
-
-      <!-- Top Center Notch: Walk Status & Inline Actions (from Image 3) -->
-      <div id="hud-status-pill" class="header-notch-pill">
-        <div id="hud-status-indicator" class="status-dot-active"></div>
-        <span id="hud-status-text">OUTDOOR MODE</span>
-        <button id="btn-pause-walk" class="notch-chip-btn hidden" title="Pause / Resume Walk">⏸</button>
-        <button id="btn-end-walk" class="notch-chip-btn end hidden" title="End Walk">✕</button>
+        OutLoot
       </div>
 
       <div class="header-actions">
-        <button id="sim-toggle-btn" class="sim-toggle-pill" title="Toggle simulation mode for testing">
-          SIM MODE
+        <!-- SIM Mode: Single symbol button that lights up #1bc06b when active -->
+        <button id="sim-toggle-btn" class="sim-toggle-btn" title="Toggle simulation mode (⚡)">
+          ⚡
         </button>
         <div id="user-points-display" class="points-pill" title="Total Authoritative Points">
           0 pts
@@ -88,16 +81,6 @@
       <div class="map-screen-wrapper">
         <div id="map"></div>
 
-        <!-- Floating Right-Side Controls: Theme Toggle & Locate Me (from Image 3) -->
-        <div class="map-floating-controls-right">
-          <button id="btn-theme-toggle" class="map-circle-btn" title="Toggle Dark/Light Mode">
-            <span id="theme-toggle-icon">🌙</span>
-          </button>
-          <button id="btn-locate-me" class="map-circle-btn" title="Center map on my location">
-            <span>📍</span>
-          </button>
-        </div>
-
         <!-- ACTIVE WALK: Compact Top HUD Dial (Next Item Drop & Cadence) -->
         <div id="hud-overlay" class="hud-overlay">
           <div class="glass-hud-dial">
@@ -120,7 +103,17 @@
           </div>
         </div>
 
-        <!-- IDLE STATE: Clean Floating Actions directly above Bottom Nav (from Image 3) -->
+        <!-- Floating Right-Side Controls: Theme Toggle & Locate Me (Cleanly aligned below HUD box) -->
+        <div class="map-floating-controls-right">
+          <button id="btn-theme-toggle" class="map-circle-btn" title="Toggle Dark/Light Mode">
+            <span id="theme-toggle-icon">🌙</span>
+          </button>
+          <button id="btn-locate-me" class="map-circle-btn" title="Center map on my location">
+            <span>📍</span>
+          </button>
+        </div>
+
+        <!-- IDLE STATE: Clean Floating Buttons directly above Bottom Nav -->
         <div id="idle-walk-card" class="idle-walk-compact-bar">
           <div class="idle-compact-row">
             <button id="btn-start-walk-map" class="btn-compact-cta primary">
@@ -130,6 +123,14 @@
               <span>⚡</span> SIM Walk
             </button>
           </div>
+        </div>
+
+        <!-- Active Walk Floating Notch (Placed just above bottom navbar with compact 8px gap) -->
+        <div id="hud-status-pill" class="bottom-active-notch hidden">
+          <div id="hud-status-indicator" class="status-dot-active"></div>
+          <span id="hud-status-text">ACTIVE WALK</span>
+          <button id="btn-pause-walk" class="notch-chip-btn" title="Pause / Resume Walk">⏸</button>
+          <button id="btn-end-walk" class="notch-chip-btn end" title="End Walk">✕</button>
         </div>
 
         <!-- Walk Mode Dimmer (Battery Saving) -->

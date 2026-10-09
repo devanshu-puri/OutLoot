@@ -66,20 +66,26 @@ body {
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   user-select: none;
-  min-height: 100vh;
+html, body {
+  height: 100%;
+  height: 100dvh;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
 }
 
 /* App Viewport Container */
 #app-container {
   max-width: 480px;
   margin: 0 auto;
-  min-height: 100vh;
+  height: 100%;
+  height: 100dvh;
   position: relative;
   display: flex;
   flex-direction: column;
   background: var(--bg-surface);
   box-shadow: 0 0 60px rgba(0, 0, 0, 0.7);
-  overflow-x: hidden;
+  overflow: hidden;
 }
 
 /* Glass Header */
@@ -102,58 +108,13 @@ body {
 }
 
 .brand-title {
-  font-size: 19px;
+  font-size: 20px;
   font-weight: 800;
   letter-spacing: -0.6px;
   display: flex;
   align-items: center;
   gap: 8px;
   color: #ffffff;
-}
-
-/* Header Center Notch: Active Walk & Paused Status Pill (from Image 3) */
-.header-notch-pill {
-  background: rgba(20, 16, 42, 0.95);
-  border: 1px solid rgba(167, 139, 250, 0.3);
-  padding: 4px 12px;
-  border-radius: var(--radius-full);
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  font-family: 'VCR_OSD_MONO', monospace;
-  font-size: 11px;
-  letter-spacing: 0.8px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
-  color: #fff;
-}
-
-.notch-chip-btn {
-  background: rgba(255, 255, 255, 0.12);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: #fff;
-  font-family: 'VCR_OSD_MONO', monospace;
-  font-size: 10px;
-  font-weight: 700;
-  padding: 2px 6px;
-  border-radius: var(--radius-full);
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: inline-flex;
-  align-items: center;
-}
-
-.notch-chip-btn:hover {
-  background: rgba(255, 255, 255, 0.25);
-}
-
-.notch-chip-btn.end {
-  background: rgba(244, 63, 94, 0.25);
-  border-color: rgba(244, 63, 94, 0.5);
-  color: var(--rose);
-}
-
-.notch-chip-btn.hidden {
-  display: none !important;
 }
 
 .brand-dot {
@@ -199,30 +160,34 @@ body {
   box-shadow: 0 4px 15px rgba(16, 185, 129, 0.2);
 }
 
-.sim-toggle-pill {
-  background: rgba(255, 255, 255, 0.06);
+.sim-toggle-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
   border: 1px solid var(--border-subtle);
   color: var(--text-mute);
-  font-size: 12px;
-  font-weight: 700;
-  font-family: 'VCR_OSD_MONO', monospace;
-  padding: 6px 14px;
-  border-radius: var(--radius-full);
+  font-size: 16px;
   cursor: pointer;
-  transition: all 0.25s ease;
-  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
 }
 
-.sim-toggle-pill:hover {
-  background: rgba(255, 255, 255, 0.12);
+.sim-toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.16);
   color: #fff;
+  transform: scale(1.05);
 }
 
-.sim-toggle-pill.active {
-  background: linear-gradient(135deg, var(--amber), #f97316);
-  border-color: var(--amber);
-  color: #000;
-  box-shadow: 0 0 15px var(--amber-glow);
+.sim-toggle-btn.active {
+  background: #1bc06b !important;
+  border-color: #1bc06b !important;
+  color: #062b16 !important;
+  box-shadow: 0 0 18px rgba(27, 192, 107, 0.65);
+  transform: scale(1.05);
 }
 
 /* Animated Curved Bottom Navigation Bar (Docked flush to bottom:0 to eliminate background bleed) */
@@ -233,7 +198,8 @@ body {
   transform: translateX(-50%);
   width: 100%;
   max-width: 480px;
-  height: 66px;
+  height: calc(66px + env(safe-area-inset-bottom, 0px));
+  padding-bottom: env(safe-area-inset-bottom, 0px);
   background: transparent;
   z-index: 1000;
   display: flex;
@@ -372,9 +338,39 @@ body {
 .screen {
   display: none;
   flex: 1;
+  width: 100%;
+  height: 100%;
   padding-top: 64px;
-  padding-bottom: 120px;
-  min-height: 100vh;
+  padding-bottom: 90px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.screen.active {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Screen Map fits mobile viewport 100% with ZERO scrolling */
+#screen-map {
+  padding: 0 !important;
+  height: 100% !important;
+  max-height: 100% !important;
+  overflow: hidden !important;
+  position: relative;
+}
+
+.map-screen-wrapper {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+#map {
+  width: 100%;
+  height: 100%;
 }
 
 .screen.active {
@@ -569,10 +565,10 @@ body {
   transform: scale(0.95);
 }
 
-/* Floating Right-Side Controls: Theme Toggle & Locate Me (from Image 3) */
+/* Floating Right-Side Controls: Theme Toggle & Locate Me (Stacked cleanly below HUD box with 16px gap) */
 .map-floating-controls-right {
   position: absolute;
-  top: 154px;
+  top: 172px;
   right: 14px;
   z-index: 500;
   display: flex;
@@ -581,10 +577,10 @@ body {
   pointer-events: auto;
 }
 
-/* IDLE STATE: Clean Floating Actions directly above Bottom Nav (from Image 3) */
+/* IDLE STATE: Clean Floating Buttons directly above Bottom Nav */
 .idle-walk-compact-bar {
   position: absolute;
-  bottom: 78px;
+  bottom: 74px;
   left: 16px;
   right: 16px;
   z-index: 500;
@@ -597,8 +593,68 @@ body {
 
 .idle-walk-compact-bar.hidden {
   opacity: 0;
-  transform: translateY(30px);
+  transform: translateY(20px);
   pointer-events: none;
+}
+
+/* Active Walk Floating Notch (Placed just above bottom navbar with compact 8px gap) */
+.bottom-active-notch {
+  position: absolute;
+  bottom: 74px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(16, 13, 36, 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(167, 139, 250, 0.3);
+  padding: 5px 14px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'VCR_OSD_MONO', monospace;
+  font-size: 11px;
+  letter-spacing: 0.8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  color: #fff;
+  z-index: 500;
+  pointer-events: auto;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
+}
+
+.bottom-active-notch.hidden {
+  opacity: 0;
+  transform: translateX(-50%) translateY(20px);
+  pointer-events: none;
+}
+
+.notch-chip-btn {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  font-family: 'VCR_OSD_MONO', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+}
+
+.notch-chip-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.notch-chip-btn.end {
+  background: rgba(244, 63, 94, 0.25);
+  border-color: rgba(244, 63, 94, 0.5);
+  color: var(--rose);
+}
+
+.notch-chip-btn.end:hover {
+  background: rgba(244, 63, 94, 0.45);
 }
 
 .idle-compact-row {

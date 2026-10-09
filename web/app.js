@@ -129,7 +129,7 @@ class App {
         const topSimBtn = document.getElementById('sim-toggle-btn');
         if (topSimBtn) {
           topSimBtn.classList.toggle('active', running);
-          topSimBtn.textContent = running ? '⚡ SIM ON' : 'SIM MODE';
+          topSimBtn.title = running ? '⚡ SIM ON (Active)' : 'Toggle SIM Mode (⚡)';
         }
         if (running && !this.currentSession) {
           this.startSessionFlow();
@@ -143,7 +143,7 @@ class App {
       simBtn.addEventListener('click', () => {
         const running = this.simCtrl.toggle();
         simBtn.classList.toggle('active', running);
-        simBtn.textContent = running ? '⚡ SIM ON' : 'SIM MODE';
+        simBtn.title = running ? '⚡ SIM ON (Active)' : 'Toggle SIM Mode (⚡)';
         if (running && !this.currentSession) {
           this.startSessionFlow();
         }
