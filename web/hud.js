@@ -53,18 +53,33 @@ export class HUDController {
 
   initLottieAnimation() {
     if (!this.lottieContainer) return;
-    try {
-      if (window.lottie) {
-        this.lottieAnim = window.lottie.loadAnimation({
-          container: this.lottieContainer,
-          renderer: 'svg',
-          loop: true,
-          autoplay: true,
-          path: '/assets/walk_cycling_shoes.json'
-        });
+
+    const tryLoad = () => {
+      try {
+        if (window.lottie) {
+          const config = {
+            container: this.lottieContainer,
+            renderer: 'svg',
+            loop: true,
+            autoplay: true
+          };
+          if (window.walkShoesData) {
+            config.animationData = window.walkShoesData;
+          } else {
+            config.path = '/assets/walk_cycling_shoes.json';
+          }
+          this.lottieAnim = window.lottie.loadAnimation(config);
+          return true;
+        }
+      } catch (e) {
+        console.warn('Lottie animation failed:', e);
       }
-    } catch (e) {
-      console.warn('Lottie animation failed to load:', e);
+      return false;
+    };
+
+    if (!tryLoad()) {
+      setTimeout(tryLoad, 200);
+      setTimeout(tryLoad, 800);
     }
   }
 

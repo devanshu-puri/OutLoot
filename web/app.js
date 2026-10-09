@@ -39,21 +39,23 @@ class App {
     this.simCtrl = new SimulatorController((sample) => this.handleSimSample(sample));
 
     this.setupNavigation();
+    this.setupMapScreenControls();
     this.setupActivityTracking();
     this.setupScreenTimeHeartbeat();
     this.setupSocialEventListeners();
     this.setupWellbeingEventListeners();
     this.setupWakeLock();
 
-    await this.ensureAuth();
-    await this.fetchPoints();
-    await this.checkActiveSession();
-
-    // Start background nudge poller
-    this.startNudgePoller();
-
     // Initialize map immediately on startup so user always sees the live map
     this.mapCtrl.init();
+
+    // Initialize HUD in ready state on map load
+    this.hudCtrl.update({
+      state: 'READY',
+      cycle_progress_s: 0,
+      cycle_required_s: 300,
+      distance_m: 0
+    });
 
     // Try fetching immediate GPS position for user pin
     if ('geolocation' in navigator) {
@@ -73,6 +75,19 @@ class App {
       );
     }
 
+    try {
+      await this.ensureAuth();
+      await this.fetchPoints();
+      await this.checkActiveSession();
+    } catch (e) {
+      console.warn('Network sync pending:', e);
+    }
+
+    // Start background nudge poller
+    this.startNudgePoller();
+  }
+
+  setupMapScreenControls() {
     // Setup Single Circular Theme Toggle Button (Moonlight <-> Sun)
     const btnTheme = document.getElementById('btn-theme-toggle');
     const themeIcon = document.getElementById('theme-toggle-icon');
@@ -180,7 +195,8 @@ class App {
     const hudStatusPill = document.getElementById('hud-status-pill');
 
     if (idleCard) idleCard.classList.toggle('hidden', isActive);
-    if (hudOverlay) hudOverlay.classList.toggle('hidden', !isActive);
+    // Keep HUD bar permanently visible so timer, next item drop, and animation are always in view
+    if (hudOverlay) hudOverlay.classList.remove('hidden');
     if (activeControls) activeControls.classList.toggle('hidden', !isActive);
     if (hudStatusPill) hudStatusPill.classList.toggle('hidden', !isActive);
   }
@@ -372,6 +388,7 @@ class App {
     }
 
     try {
+      await this.ensureAuth();
       const resp = await fetch('/api/session/start', {
         method: 'POST',
         headers: this.getHeaders(),
@@ -387,10 +404,55 @@ class App {
         this.sessionStartTimestamp = Date.now();
         this.screenActiveTimeSeconds = 0;
         this.onSessionStarted();
+        return;
+      }
+
+      // If token expired (401), re-auth and retry
+      if (resp.status === 401) {
+        this.token = null;
+        localStorage.removeItem('tgt_token');
+        await this.ensureAuth();
+        const retryResp = await fetch('/api/session/start', {
+          method: 'POST',
+          headers: this.getHeaders(),
+          body: JSON.stringify({
+            display_name: 'Trail Explorer',
+            start_lat: startLat,
+            start_lon: startLon
+          })
+        });
+        if (retryResp.ok) {
+          this.currentSession = await retryResp.json();
+          this.sessionStartTimestamp = Date.now();
+          this.screenActiveTimeSeconds = 0;
+          this.onSessionStarted();
+          return;
+        }
       }
     } catch (e) {
-      console.error('Session start error', e);
+      console.warn('Session start network error, activating local mode:', e);
     }
+
+    // Fallback active session guarantee so user is never stuck
+    this.currentSession = {
+      id: 'ses_local_' + Date.now(),
+      state: 'ACTIVE',
+      cycle_progress_s: 0,
+      cycle_required_s: 300,
+      distance_m: 0,
+      next_item: {
+        id: 'drop_initial',
+        name: 'Clover Sprout',
+        rarity: 'COMMON',
+        base_points: 10,
+        lat: startLat + 0.0003,
+        lon: startLon + 0.0003,
+        status: 'LOCKED'
+      }
+    };
+    this.sessionStartTimestamp = Date.now();
+    this.screenActiveTimeSeconds = 0;
+    this.onSessionStarted();
   }
 
   onSessionStarted() {
