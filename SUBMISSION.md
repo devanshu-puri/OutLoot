@@ -28,6 +28,8 @@ Most fitness or location-based games commit one of two sins:
 
 ## 2. Demo
 
+* **Live Cloud Deployment (Render):** [https://outloot-tgtrails.onrender.com](https://outloot-tgtrails.onrender.com)
+* **1-Click Deploy to Render:** [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/devanshu-puri/OutLoot)
 * **Live GitHub Repository:** [https://github.com/devanshu-puri/OutLoot](https://github.com/devanshu-puri/OutLoot)
 * **Local Web App:** Vanilla JS + CSS + Leaflet running over FastAPI at `http://127.0.0.1:8000/`.
 * **Zero External API Keys:** Powered by 100% free, community-hosted **OpenStreetMap (OSM)** and local open-weight AI.
@@ -101,4 +103,6 @@ This project was built collaboratively with Google DeepMind's **Antigravity** ag
 ## 8. Prize Categories
 
 * **Open-Source AI Challenge Week 1: Touch Grass**
-* **Best Use of Gemma** (Local Gemma model generating JSON missions, walking tips, and drop relic lore with zero cloud dependencies)
+* **Best Use of Render** ($200 USD: Automated infrastructure-as-code `render.yaml` serving the FastAPI backend and PWA frontend with zero external dependencies)
+* **Best Use of Gemma** ($200 USD: Local Gemma open-weight model generating structured JSON outdoor missions, walking tips, and drop relic lore with deterministic fallback resilience)
+* **Best Use of Entire** ($100 USD: Transparent agent-assisted pair programming and development sessions managed through DevRelay)

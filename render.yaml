@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: outloot-tgtrails
+    runtime: python
+    plan: free
+    region: oregon
+    buildCommand: pip install --upgrade pip && pip install -r requirements.txt
+    startCommand: uvicorn server.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.0
+      - key: TG_ENVIRONMENT
+        value: production
+      - key: TG_DEBUG
+        value: "false"
+      - key: OLLAMA_BASE_URL
+        value: http://127.0.0.1:11434
