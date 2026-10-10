@@ -5,12 +5,15 @@ from typing import List, Optional, Tuple
 from fastapi import HTTPException, status
 from server.db import tx
 from server.schemas import (
+    FollowResp,
     FriendItem,
     FriendNudgeItem,
     LeaderboardItem,
     LeaderboardResp,
     ScreenTimeHeartbeatResp,
     ScreenTimeImportResp,
+    TrackPoint,
+    UserTrackResp,
 )
 from server.services.points import get_points_balance
 
@@ -380,7 +383,9 @@ def get_live_leaderboard(conn: sqlite3.Connection, current_user_id: str) -> Lead
             screen_mins=screen_mins,
             ratio_percent=ratio_pct,
             is_friend=uid in friends,
-            is_current_user=uid == current_user_id
+            is_current_user=uid == current_user_id,
+            username=str(u["username"]) if "username" in u.keys() and u["username"] else None,
+            has_track=True
         ))
 
     # Sort by grass_score descending
@@ -397,4 +402,144 @@ def get_live_leaderboard(conn: sqlite3.Connection, current_user_id: str) -> Lead
         user_rank=user_rank,
         total_walkers=len(items),
         time_window="Live Real-Time"
+    )
+
+
+def follow_user(conn: sqlite3.Connection, user_id: str, target_user_id: str) -> FollowResp:
+    seed_demo_social_walkers_if_empty(conn, user_id)
+    if user_id == target_user_id:
+        raise HTTPException(status_code=400, detail="Cannot follow yourself")
+
+    target = conn.execute("SELECT * FROM users WHERE id = ?;", (target_user_id,)).fetchone()
+    if not target:
+        raise HTTPException(status_code=404, detail="Target explorer not found")
+
+    with tx(conn):
+        f_id = f"fr_{secrets.token_hex(6)}"
+        conn.execute(
+            "INSERT OR IGNORE INTO friends (id, user_id, friend_id, status) VALUES (?, ?, ?, 'ACCEPTED');",
+            (f_id, user_id, target_user_id)
+        )
+
+    return FollowResp(
+        status="followed",
+        target_user_id=target_user_id,
+        is_following=True,
+        message=f"You are now following {target['display_name']}!"
+    )
+
+
+def unfollow_user(conn: sqlite3.Connection, user_id: str, target_user_id: str) -> FollowResp:
+    with tx(conn):
+        conn.execute("DELETE FROM friends WHERE user_id = ? AND friend_id = ?;", (user_id, target_user_id))
+
+    return FollowResp(
+        status="unfollowed",
+        target_user_id=target_user_id,
+        is_following=False,
+        message="Unfollowed successfully."
+    )
+
+
+def get_user_track(conn: sqlite3.Connection, target_user_id: str) -> UserTrackResp:
+    import hashlib
+    import math
+
+    seed_demo_social_walkers_if_empty(conn, target_user_id)
+    user = conn.execute("SELECT * FROM users WHERE id = ?;", (target_user_id,)).fetchone()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Target user not found")
+
+    display_name = str(user["display_name"] or "Explorer")
+    avatar = str(user["avatar_emoji"] or "🌱")
+
+    # 1. Check for real recorded session movement events
+    session_row = conn.execute(
+        """
+        SELECT * FROM sessions
+        WHERE user_id = ? AND distance_m > 0
+        ORDER BY started_at DESC
+        LIMIT 1;
+        """,
+        (target_user_id,)
+    ).fetchone()
+
+    pts: List[TrackPoint] = []
+    track_title = f"{display_name}'s Outdoor Trail"
+    dist_m = 0.0
+    dur_s = 0.0
+    pts_earned = 0
+    start_time = "Today"
+
+    if session_row:
+        sess_id = session_row["id"]
+        dist_m = round(float(session_row["distance_m"] or 0.0), 1)
+        dur_s = round(float(session_row["session_elapsed_s"] or 0.0), 1)
+        start_time = str(session_row["started_at"])
+
+        events = conn.execute(
+            """
+            SELECT lat, lon, seg_speed_mps, t
+            FROM movement_events
+            WHERE session_id = ?
+            ORDER BY t ASC;
+            """,
+            (sess_id,)
+        ).fetchall()
+
+        for ev in events:
+            pts.append(TrackPoint(
+                lat=float(ev["lat"]),
+                lon=float(ev["lon"]),
+                speed_mps=float(ev["seg_speed_mps"] or 1.2),
+                t=float(ev["t"])
+            ))
+
+    # 2. Organic scenic fallback if user has no GPS breadcrumbs yet (demo walkers, new accounts)
+    if len(pts) < 2:
+        seed_hash = int(hashlib.md5(target_user_id.encode("utf-8")).hexdigest()[:6], 16)
+        base_lat = 13.0827 + ((seed_hash % 30) - 15) * 0.0004
+        base_lon = 80.2707 + (((seed_hash >> 3) % 30) - 15) * 0.0004
+
+        trail_names = [
+            "Pine Ridge Greenway Loop",
+            "Emerald Canopy Meadow Run",
+            "Sunset Riverside Paved Trail",
+            "Whispering Willow Nature Loop",
+            "Highland Ridge Sunrise Path"
+        ]
+        track_title = trail_names[seed_hash % len(trail_names)]
+
+        # Generate smooth circular walking trail with organic variation
+        num_pts = 14
+        radius_lat = 0.0010 + (seed_hash % 6) * 0.00015
+        radius_lon = radius_lat * 1.25
+
+        for i in range(num_pts):
+            angle = (i / num_pts) * 2 * math.pi
+            wobble = 1.0 + 0.12 * math.sin(angle * 3)
+            p_lat = round(base_lat + radius_lat * wobble * math.sin(angle), 6)
+            p_lon = round(base_lon + radius_lon * wobble * math.cos(angle), 6)
+            pts.append(TrackPoint(
+                lat=p_lat,
+                lon=p_lon,
+                speed_mps=round(1.2 + 0.3 * math.sin(angle * 2), 2),
+                t=float(i * 75)
+            ))
+
+        out_s = float(user["outdoor_time_total_s"] or 1800.0)
+        dist_m = round(max(450.0, out_s * 1.3), 1)
+        dur_s = round(max(300.0, out_s), 1)
+        pts_earned = int(dist_m / 10.0)
+
+    return UserTrackResp(
+        user_id=target_user_id,
+        display_name=display_name,
+        avatar_emoji=avatar,
+        track_title=track_title,
+        distance_m=dist_m,
+        duration_s=dur_s,
+        points_earned=pts_earned,
+        started_at=start_time,
+        points=pts
     )

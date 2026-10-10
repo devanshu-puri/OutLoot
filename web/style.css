@@ -80,6 +80,11 @@ html, body {
   overflow: hidden;
 }
 
+/* Global Utility */
+.hidden {
+  display: none !important;
+}
+
 /* App Viewport Container */
 #app-container {
   max-width: 480px;
@@ -2563,55 +2568,119 @@ html, body {
 }
 
 /* ==========================================================================
-   USER ACCOUNT & DAILY ACTIVITY MODAL
+   USER ACCOUNT & DAILY ACTIVITY MODAL (FIXED UX)
    ========================================================================== */
 .user-account-card {
-  max-width: 420px;
-  max-height: 85vh;
+  max-width: 440px;
+  max-height: 88vh;
   overflow-y: auto;
+  overflow-x: hidden;
+  position: relative;
+  padding: 24px 20px 20px;
+  box-sizing: border-box;
+}
+
+.user-account-card::-webkit-scrollbar {
+  width: 5px;
+}
+
+.user-account-card::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.user-account-card::-webkit-scrollbar-thumb {
+  background: rgba(16, 185, 129, 0.3);
+  border-radius: 4px;
+}
+
+.pixel-modal-close-btn {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 2px solid #000;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 900;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  cursor: pointer;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.pixel-modal-close-btn:hover {
+  background: #ef4444;
+  color: #fff;
+  transform: scale(1.08);
 }
 
 .profile-nav-tabs {
   display: flex;
   gap: 6px;
-  background: rgba(0, 0, 0, 0.35);
+  background: rgba(0, 0, 0, 0.45);
   border: 1px solid var(--border-subtle);
   padding: 4px;
-  border-radius: 6px;
+  border-radius: 8px;
+  margin-top: 18px;
   margin-bottom: 14px;
 }
 
 .profile-nav-tab {
   flex: 1;
-  padding: 8px 6px;
+  padding: 9px 6px;
   background: transparent;
   border: none;
   color: var(--text-mute);
   font-size: 12px;
   font-weight: 800;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s ease;
   font-family: inherit;
+  text-align: center;
+}
+
+.profile-nav-tab:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .profile-nav-tab.active {
   background: #10b981;
   color: #000;
-  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.4);
+  font-weight: 900;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.5);
+}
+
+.profile-modal-view {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  animation: pixel-modal-appear 0.2s ease;
+}
+
+.profile-modal-view.hidden {
+  display: none !important;
 }
 
 .profile-avatar-frame.my-avatar {
-  font-size: 32px;
+  font-size: 34px;
   background: radial-gradient(circle, #1e293b, #0f172a);
   border-color: #10b981;
+  box-shadow: 0 0 15px rgba(16, 185, 129, 0.35);
 }
 
 .profile-handle {
   font-size: 12px;
-  color: var(--text-mute);
+  color: var(--grass-light);
   font-family: 'VCR_OSD_MONO', monospace;
   margin-top: -2px;
+  font-weight: 700;
 }
 
 /* Daily History Stack */
@@ -2652,29 +2721,30 @@ html, body {
 .avatar-emoji-picker-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 8px;
   margin-top: 6px;
 }
 
 .avatar-pick-btn {
-  width: 38px;
-  height: 38px;
-  border-radius: 6px;
+  width: 42px;
+  height: 42px;
+  border-radius: 8px;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid var(--border-subtle);
-  font-size: 20px;
+  font-size: 22px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: transform 0.15s ease, background 0.15s ease;
+  transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease;
 }
 
 .avatar-pick-btn:hover,
 .avatar-pick-btn.selected {
-  background: rgba(16, 185, 129, 0.2);
+  background: rgba(16, 185, 129, 0.25);
   border-color: #10b981;
-  transform: scale(1.1);
+  transform: scale(1.12);
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
 }
 
 /* Auth sub tabs */
@@ -2687,28 +2757,193 @@ html, body {
 
 .auth-sub-tab {
   flex: 1;
-  padding: 6px 10px;
+  padding: 8px 10px;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid transparent;
   color: var(--text-mute);
   font-weight: 800;
   font-size: 12px;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
+  transition: all 0.2s;
 }
 
 .auth-sub-tab.active {
-  background: rgba(16, 185, 129, 0.15);
+  background: rgba(16, 185, 129, 0.2);
   border-color: #10b981;
   color: #10b981;
 }
 
 .auth-logged-card {
   text-align: center;
-  padding: 16px;
+  padding: 20px 16px;
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid var(--border-subtle);
   border-radius: 8px;
+}
+
+/* ==========================================================================
+   APP ONBOARDING / AUTH MODAL
+   ========================================================================== */
+.auth-onboard-card {
+  width: 100%;
+  max-width: 400px;
+  background: #141033;
+  border: 4px solid #000;
+  box-shadow: 0 8px 0 #000, 0 16px 36px rgba(0, 0, 0, 0.9);
+  border-radius: 8px;
+  padding: 24px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  font-family: 'VCR_OSD_MONO', monospace;
+  animation: pixel-modal-appear 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.auth-brand-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid #10b981;
+  color: #10b981;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 800;
+  align-self: flex-start;
+}
+
+.auth-quick-guest-btn {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px dashed var(--border-subtle);
+  color: var(--text-mute);
+  font-size: 12px;
+  font-weight: 800;
+  padding: 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  margin-top: 4px;
+}
+
+.auth-quick-guest-btn:hover {
+  background: rgba(255, 255, 255, 0.09);
+  color: #ffd32a;
+  border-color: #ffd32a;
+}
+
+/* ==========================================================================
+   TRAIL INSPECTOR BANNER & LEADERBOARD ACTIONS
+   ========================================================================== */
+.trail-inspector-banner {
+  position: absolute;
+  top: 14px;
+  left: 12px;
+  right: 12px;
+  z-index: 1200;
+  background: rgba(15, 23, 42, 0.94);
+  backdrop-filter: blur(14px);
+  border: 2px solid #00f0ff;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.8), 0 0 16px rgba(0, 240, 255, 0.35);
+  border-radius: 8px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  animation: pixel-modal-appear 0.25s ease;
+}
+
+.trail-inspector-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.trail-inspector-name {
+  font-size: 13px;
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: 0.5px;
+}
+
+.trail-inspector-metrics {
+  font-size: 11px;
+  color: #00f0ff;
+  margin-top: 2px;
+}
+
+.trail-inspector-close {
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid #ef4444;
+  color: #ef4444;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+
+.trail-inspector-close:hover {
+  background: #ef4444;
+  color: #fff;
+}
+
+/* Leaderboard interactive buttons */
+.btn-lb-track {
+  background: rgba(0, 240, 255, 0.15);
+  border: 1px solid #00f0ff;
+  color: #00f0ff;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  transition: all 0.15s;
+}
+
+.btn-lb-track:hover {
+  background: #00f0ff;
+  color: #000;
+  transform: scale(1.05);
+}
+
+.btn-lb-follow {
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid #10b981;
+  color: #10b981;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  transition: all 0.15s;
+}
+
+.btn-lb-follow.following {
+  background: rgba(16, 185, 129, 0.35);
+  border-color: #10b981;
+  color: #fff;
+}
+
+.btn-lb-follow:hover {
+  transform: scale(1.05);
 }
 
 

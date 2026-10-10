@@ -247,6 +247,32 @@ class FriendNudgeItem(BaseModel):
     created_at: str
 
 
+class TrackPoint(BaseModel):
+    lat: float
+    lon: float
+    speed_mps: Optional[float] = None
+    t: Optional[float] = None
+
+
+class UserTrackResp(BaseModel):
+    user_id: str
+    display_name: str
+    avatar_emoji: str
+    track_title: str
+    distance_m: float
+    duration_s: float
+    points_earned: int
+    started_at: str
+    points: List[TrackPoint]
+
+
+class FollowResp(BaseModel):
+    status: str
+    target_user_id: str
+    is_following: bool
+    message: str
+
+
 # --- Live Leaderboard ---
 
 class LeaderboardItem(BaseModel):
@@ -261,6 +287,8 @@ class LeaderboardItem(BaseModel):
     ratio_percent: int
     is_friend: bool
     is_current_user: bool
+    username: Optional[str] = None
+    has_track: bool = True
 
 
 class LeaderboardResp(BaseModel):

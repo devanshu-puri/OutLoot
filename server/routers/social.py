@@ -4,6 +4,7 @@ from server.db import get_db
 from server.routers.auth import get_current_user_id
 from server.schemas import (
     AddFriendReq,
+    FollowResp,
     FriendItem,
     FriendNudgeItem,
     FriendNudgeReq,
@@ -13,16 +14,20 @@ from server.schemas import (
     ScreenTimeImportReq,
     ScreenTimeImportResp,
     UpdateThresholdReq,
+    UserTrackResp,
 )
 from server.services.social import (
     add_friend,
+    follow_user,
     get_live_leaderboard,
     get_pending_nudges,
     get_screentime_summary,
+    get_user_track,
     import_digital_wellbeing,
     list_friends,
     record_screentime_heartbeat,
     send_nudge,
+    unfollow_user,
     update_threshold,
 )
 
@@ -108,3 +113,30 @@ def send_friend_nudge_endpoint(
 def get_friend_nudges_endpoint(user_id: str = Depends(get_current_user_id)):
     with get_db() as conn:
         return get_pending_nudges(conn, user_id)
+
+
+@router.post("/api/friends/follow/{target_user_id}", response_model=FollowResp)
+def follow_user_endpoint(
+    target_user_id: str,
+    user_id: str = Depends(get_current_user_id)
+):
+    with get_db() as conn:
+        return follow_user(conn, user_id, target_user_id)
+
+
+@router.post("/api/friends/unfollow/{target_user_id}", response_model=FollowResp)
+def unfollow_user_endpoint(
+    target_user_id: str,
+    user_id: str = Depends(get_current_user_id)
+):
+    with get_db() as conn:
+        return unfollow_user(conn, user_id, target_user_id)
+
+
+@router.get("/api/social/track/{target_user_id}", response_model=UserTrackResp)
+def get_user_track_endpoint(
+    target_user_id: str,
+    user_id: str = Depends(get_current_user_id)
+):
+    with get_db() as conn:
+        return get_user_track(conn, target_user_id)

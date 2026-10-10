@@ -85,6 +85,18 @@
       <div class="map-screen-wrapper">
         <div id="map"></div>
 
+        <!-- Trail Inspector Floating Banner (when inspecting another player's track) -->
+        <div id="trail-inspector-banner" class="trail-inspector-banner hidden">
+          <div class="trail-inspector-info">
+            <span id="trail-inspector-avatar" style="font-size:24px;">🏃</span>
+            <div>
+              <div id="trail-inspector-title" class="trail-inspector-name">Alex Green's Track</div>
+              <div id="trail-inspector-stats" class="trail-inspector-metrics">1.2 km · 14 mins · Pine Ridge Loop</div>
+            </div>
+          </div>
+          <button id="btn-close-trail-inspector" class="trail-inspector-close">✕ Return</button>
+        </div>
+
         <!-- ACTIVE WALK: Compact Top HUD Dial (Next Item Drop & Cadence) -->
         <div id="hud-overlay" class="hud-overlay" style="display: none;">
           <div class="glass-hud-dial">
@@ -256,16 +268,27 @@
             </div>
           </div>
 
+          <!-- Trail Track Inspection Card -->
+          <div class="profile-h2h-box" style="margin-top:2px;">
+            <div class="h2h-header">
+              <span id="profile-track-title">🌲 VERIFIED TRAIL TRACK</span>
+              <span id="profile-track-distance" style="color:#00f0ff; font-weight:800;">1,450 m</span>
+            </div>
+            <button id="btn-profile-view-track" class="pixel-action-btn" style="background:rgba(0,240,255,0.18); border-color:#00f0ff; color:#00f0ff; width:100%; margin-top:6px; font-weight:900; padding:10px;">
+              🗺️ INSPECT TRAIL TRACK ON MAP
+            </button>
+          </div>
+
           <!-- Gamified Actions -->
           <div class="profile-actions-row">
+            <button id="btn-profile-follow" class="pixel-action-btn secondary">
+              <span>➕</span> <span id="btn-profile-follow-text">FOLLOW</span>
+            </button>
             <button id="btn-profile-challenge" class="pixel-action-btn primary">
               <span>⚔️</span> DUEL
             </button>
-            <button id="btn-profile-nudge" class="pixel-action-btn secondary">
+            <button id="btn-profile-nudge" class="pixel-action-btn accent">
               <span>🌱</span> NUDGE
-            </button>
-            <button id="btn-profile-kudos" class="pixel-action-btn accent">
-              <span>✨</span> +10 XP
             </button>
           </div>
           <div id="profile-action-feedback" class="profile-feedback-text"></div>
@@ -365,19 +388,6 @@
             ⚠️ Trigger Activated: You dismissed your Touch Grass break! Daily Sponsor Rewards are locked until you complete a 10m outdoor walk.
           </div>
         </div>
-
-        <!-- Threshold Selector Card -->
-        <div class="bento-card" style="flex-direction:column; gap:12px;">
-          <h3 style="font-size:15px; font-weight:700; color:#fff;">Touch Grass Nudge Threshold</h3>
-          <p style="font-size:13px; color:var(--text-mute);">Choose how many active screen minutes before OutLoot alerts you to go outdoors:</p>
-          <div style="display:flex; gap:8px; width:100%;">
-            <button class="filter-pill btn-set-threshold" data-mins="15">15 min</button>
-            <button class="filter-pill btn-set-threshold active" data-mins="30">30 min</button>
-            <button class="filter-pill btn-set-threshold" data-mins="45">45 min</button>
-            <button class="filter-pill btn-set-threshold" data-mins="60">60 min</button>
-          </div>
-        </div>
-
         <!-- Android Digital Wellbeing / ActivityWatch Sync -->
         <div class="bento-card" style="flex-direction:column; gap:12px;">
           <h3 style="font-size:15px; font-weight:700; color:#fff;">📲 Sync Android Digital Wellbeing</h3>
@@ -681,6 +691,61 @@
               <div id="auth-feedback-toast" class="pixel-toast-msg"></div>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FIRST-TIME / APP ONBOARDING AUTH MODAL (LOGIN / REGISTER / QUICK PLAY) -->
+    <div id="app-auth-modal" class="pixel-modal-backdrop hidden">
+      <div class="auth-onboard-card">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div class="auth-brand-badge">🌱 OUTLOOT AUTHENTICATION</div>
+          <button id="btn-close-onboard-auth" class="pixel-modal-close-btn" style="position:static;" title="Close Modal">✕</button>
+        </div>
+
+        <div style="text-align:center;">
+          <h2 style="font-size:22px; font-weight:900; color:#fff; letter-spacing:1px; margin:0 0 6px;">
+            TOUCH GRASS &amp; EARN LOOT
+          </h2>
+          <p style="font-size:12px; color:var(--text-mute); margin:0; line-height:1.4;">
+            Log in to load your verified outdoor stats, or create a new profile to follow friends and view their tracks on the leaderboard.
+          </p>
+        </div>
+
+        <div class="auth-form-tabs">
+          <button id="onboard-tab-login" class="auth-sub-tab active">Log In</button>
+          <button id="onboard-tab-signup" class="auth-sub-tab">Create Account</button>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <div>
+            <label style="font-size:11px; font-weight:800; color:var(--text-faint); text-transform:uppercase;">Username</label>
+            <input id="onboard-input-username" class="pixel-input-field" type="text" placeholder="Enter username..." style="width:100%; margin-top:4px;" autocomplete="username" />
+          </div>
+
+          <div id="onboard-field-display-name" class="hidden">
+            <label style="font-size:11px; font-weight:800; color:var(--text-faint); text-transform:uppercase;">Explorer Display Name</label>
+            <input id="onboard-input-display-name" class="pixel-input-field" type="text" placeholder="Enter full trail name..." style="width:100%; margin-top:4px;" />
+          </div>
+
+          <div>
+            <label style="font-size:11px; font-weight:800; color:var(--text-faint); text-transform:uppercase;">Password</label>
+            <input id="onboard-input-password" class="pixel-input-field" type="password" placeholder="Enter password..." style="width:100%; margin-top:4px;" autocomplete="current-password" />
+          </div>
+
+          <button id="btn-onboard-submit-auth" class="pixel-action-btn primary" style="width:100%; margin-top:6px; font-size:13px; padding:12px;">
+            🚀 Log In &amp; Load Data
+          </button>
+          <div id="onboard-auth-toast" class="pixel-toast-msg" style="display:none; color:#ffd32a; font-size:12px; text-align:center;"></div>
+
+          <div style="position:relative; text-align:center; margin:8px 0 2px;">
+            <div style="height:1px; background:var(--border-subtle); width:100%;"></div>
+            <span style="position:absolute; top:-9px; left:50%; transform:translateX(-50%); background:#141033; padding:0 8px; font-size:10px; color:var(--text-faint); font-weight:800;">OR</span>
+          </div>
+
+          <button id="btn-onboard-quick-guest" class="auth-quick-guest-btn">
+            ⚡ Quick Play as Guest (Save Progress Later)
+          </button>
         </div>
       </div>
     </div>

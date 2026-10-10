@@ -279,4 +279,77 @@ export class MapController {
       );
     }
   }
+
+  renderUserTrail(trailPoints, trailMeta = {}) {
+    if (!this.map || !trailPoints || trailPoints.length < 2) return;
+
+    this.clearUserTrail();
+
+    const latlngs = trailPoints.map((p) => [p.lat, p.lon]);
+
+    // Outer glow polyline
+    this.trailGlowPolyline = L.polyline(latlngs, {
+      color: '#00f0ff',
+      weight: 10,
+      opacity: 0.35,
+      lineCap: 'round',
+      lineJoin: 'round'
+    }).addTo(this.map);
+
+    // Core neon polyline
+    this.trailPolyline = L.polyline(latlngs, {
+      color: '#00f0ff',
+      weight: 4,
+      opacity: 0.95,
+      lineCap: 'round',
+      lineJoin: 'round',
+      dashArray: '6, 8'
+    }).addTo(this.map);
+
+    // Start marker
+    const startPoint = latlngs[0];
+    const startIcon = L.divIcon({
+      className: 'trail-start-marker',
+      html: '<div style="background:#10b981; color:#000; font-size:12px; font-weight:800; padding:3px 6px; border-radius:4px; border:2px solid #000; box-shadow:0 2px 8px rgba(0,0,0,0.6);">🏁 START</div>',
+      iconSize: [60, 24],
+      iconAnchor: [30, 12]
+    });
+    this.trailStartMarker = L.marker(startPoint, { icon: startIcon }).addTo(this.map);
+
+    // End marker
+    const endPoint = latlngs[latlngs.length - 1];
+    const endIcon = L.divIcon({
+      className: 'trail-end-marker',
+      html: `<div style="background:#ffd32a; color:#000; font-size:12px; font-weight:800; padding:3px 6px; border-radius:4px; border:2px solid #000; box-shadow:0 2px 8px rgba(0,0,0,0.6);">📍 ${trailMeta.name || 'CURRENT'}</div>`,
+      iconSize: [80, 24],
+      iconAnchor: [40, 12]
+    });
+    this.trailEndMarker = L.marker(endPoint, { icon: endIcon }).addTo(this.map);
+
+    try {
+      this.map.fitBounds(this.trailGlowPolyline.getBounds(), { padding: [60, 60], maxZoom: 17 });
+    } catch (e) {
+      this.map.panTo(startPoint);
+    }
+  }
+
+  clearUserTrail() {
+    if (!this.map) return;
+    if (this.trailGlowPolyline) {
+      this.map.removeLayer(this.trailGlowPolyline);
+      this.trailGlowPolyline = null;
+    }
+    if (this.trailPolyline) {
+      this.map.removeLayer(this.trailPolyline);
+      this.trailPolyline = null;
+    }
+    if (this.trailStartMarker) {
+      this.map.removeLayer(this.trailStartMarker);
+      this.trailStartMarker = null;
+    }
+    if (this.trailEndMarker) {
+      this.map.removeLayer(this.trailEndMarker);
+      this.trailEndMarker = null;
+    }
+  }
 }

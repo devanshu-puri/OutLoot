@@ -76,3 +76,21 @@ def test_friends_and_live_leaderboard(test_client):
     )
     assert nudge_resp.status_code == 200
     assert nudge_resp.json()["status"] == "sent"
+
+    # 5. Follow another player
+    follow_resp = test_client.post(f"/api/friends/follow/{f_data['user_id']}", headers=headers)
+    assert follow_resp.status_code == 200
+    assert follow_resp.json()["is_following"] is True
+
+    # 6. Unfollow player
+    unfollow_resp = test_client.post(f"/api/friends/unfollow/{f_data['user_id']}", headers=headers)
+    assert unfollow_resp.status_code == 200
+    assert unfollow_resp.json()["is_following"] is False
+
+    # 7. Inspect player's track
+    track_resp = test_client.get(f"/api/social/track/{f_data['user_id']}", headers=headers)
+    assert track_resp.status_code == 200
+    track_data = track_resp.json()
+    assert track_data["user_id"] == f_data["user_id"]
+    assert len(track_data["points"]) >= 2
+    assert "distance_m" in track_data

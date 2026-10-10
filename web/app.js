@@ -34,6 +34,7 @@ class App {
     this.socialPollerInterval = null;
     this.selectedAvatarEmoji = '🌱';
     this.authMode = 'login';
+    this.onboardAuthMode = 'login';
     window.appInstance = this;
 
     this.mapCtrl = new MapController('map');
@@ -232,8 +233,41 @@ class App {
   }
 
   async ensureAuth() {
-    if (this.token && this.userId) return;
+    if (this.token && this.userId) {
+      try {
+        const resp = await fetch('/api/auth/me', { headers: this.getHeaders() });
+        if (resp.ok) {
+          const me = await resp.json();
+          this.userProfile = me;
+          this.renderUserProfile(me);
+          return;
+        }
+      } catch (e) {
+        console.warn('Network auth check deferred:', e);
+        return;
+      }
+      // Invalid token, clear
+      this.token = null;
+      this.userId = null;
+      localStorage.removeItem('tgt_token');
+      localStorage.removeItem('tgt_user_id');
+    }
 
+    // Prompt user to register or sign in on app open!
+    this.openOnboardAuthModal();
+  }
+
+  openOnboardAuthModal() {
+    const modal = document.getElementById('app-auth-modal');
+    if (modal) modal.classList.remove('hidden');
+  }
+
+  closeOnboardAuthModal() {
+    const modal = document.getElementById('app-auth-modal');
+    if (modal) modal.classList.add('hidden');
+  }
+
+  async quickGuestAuth() {
     try {
       const resp = await fetch('/api/auth/anon', { method: 'POST' });
       if (resp.ok) {
@@ -242,9 +276,75 @@ class App {
         this.userId = data.user_id;
         localStorage.setItem('tgt_token', this.token);
         localStorage.setItem('tgt_user_id', this.userId);
+        this.closeOnboardAuthModal();
+        cues.playCollectedCue();
+
+        await this.loadUserProfile();
+        await this.fetchPoints();
+        this.fetchLeaderboard(this.currentLeaderboardScope);
+        this.showToast(`🌱 Playing as Guest Explorer: ${data.display_name}`);
       }
     } catch (e) {
-      console.error('Auth failure', e);
+      console.error('Guest auth failed', e);
+    }
+  }
+
+  async handleOnboardAuthSubmit() {
+    const userInput = document.getElementById('onboard-input-username');
+    const passInput = document.getElementById('onboard-input-password');
+    const nameInput = document.getElementById('onboard-input-display-name');
+    const toast = document.getElementById('onboard-auth-toast');
+
+    const username = userInput?.value?.trim();
+    const password = passInput?.value?.trim();
+    const displayName = nameInput?.value?.trim();
+
+    if (!username || !password) {
+      if (toast) {
+        toast.style.display = 'block';
+        toast.textContent = '⚠️ Username and password are required.';
+      }
+      return;
+    }
+
+    try {
+      const endpoint = this.onboardAuthMode === 'signup' ? '/api/auth/register' : '/api/auth/login';
+      const bodyPayload = this.onboardAuthMode === 'signup'
+        ? { username, password, display_name: displayName }
+        : { username, password };
+
+      const resp = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(bodyPayload)
+      });
+
+      const data = await resp.json();
+      if (!resp.ok) {
+        if (toast) {
+          toast.style.display = 'block';
+          toast.textContent = `❌ ${data.detail?.message || data.detail || 'Authentication failed'}`;
+        }
+        return;
+      }
+
+      this.token = data.token;
+      this.userId = data.user_id;
+      localStorage.setItem('tgt_token', this.token);
+      localStorage.setItem('tgt_user_id', this.userId);
+
+      this.closeOnboardAuthModal();
+      cues.playCollectedCue();
+
+      await this.loadUserProfile();
+      await this.fetchPoints();
+      this.fetchLeaderboard(this.currentLeaderboardScope);
+      this.showToast(`🎉 Welcome back, ${data.display_name}! Live data loaded.`);
+    } catch (e) {
+      if (toast) {
+        toast.style.display = 'block';
+        toast.textContent = '❌ Network error during sign in.';
+      }
     }
   }
 
@@ -1158,6 +1258,17 @@ class App {
         const formattedScore = this.formatPixelNumber(player.score_num);
         const stepsOutStr = this.formatPixelNumber(player.steps_out);
 
+        const actionButtons = player.is_me ? '' : `
+          <div style="display:flex; flex-direction:column; gap:4px; margin-left:auto; align-items:flex-end;">
+            <button class="btn-lb-track" title="Inspect ${player.name}'s Trail on Map" onclick="event.stopPropagation(); window.appInstance.inspectPlayerTrack('${player.id}')">
+              🗺️ Trail
+            </button>
+            <button class="btn-lb-follow ${player.is_friend ? 'following' : ''}" title="${player.is_friend ? 'Unfollow' : 'Follow'}" onclick="event.stopPropagation(); window.appInstance.toggleFollow('${player.id}')">
+              ${player.is_friend ? '✓ Friend' : '+ Follow'}
+            </button>
+          </div>
+        `;
+
         return `
           <div class="pixel-card ${cardClass}" data-player-id="${player.id}" onclick="window.appInstance.openPlayerProfile('${player.id}')">
             <div class="pixel-rank-box">
@@ -1174,6 +1285,7 @@ class App {
               <div class="pixel-player-score">${formattedScore} pts</div>
               <div class="pixel-player-sub">${stepsOutStr} STEPS · ${player.outdoor_pct}% OUTDOOR</div>
             </div>
+            ${actionButtons}
           </div>
         `;
       }).join('');
@@ -1220,6 +1332,25 @@ class App {
     const streakEl = document.getElementById('profile-modal-streak');
     if (streakEl) streakEl.textContent = `${player.streak_days} DAYS 🔥`;
 
+    // Follow button state
+    const followBtn = document.getElementById('btn-profile-follow');
+    const followText = document.getElementById('btn-profile-follow-text');
+    if (followBtn) {
+      if (player.is_me) {
+        followBtn.style.display = 'none';
+      } else {
+        followBtn.style.display = 'flex';
+        followBtn.classList.toggle('following', Boolean(player.is_friend));
+        if (followText) followText.textContent = player.is_friend ? 'FOLLOWING' : 'FOLLOW';
+      }
+    }
+
+    // Trail track overview
+    const trackTitleEl = document.getElementById('profile-track-title');
+    const trackDistEl = document.getElementById('profile-track-distance');
+    if (trackTitleEl) trackTitleEl.textContent = `🌲 ${player.name.toUpperCase()}'S TRAIL`;
+    if (trackDistEl) trackDistEl.textContent = `${this.formatPixelNumber(Math.round(player.steps_out * 0.75))} m`;
+
     // Head-to-head comparison
     const targetNameEl = document.getElementById('h2h-target-name');
     if (targetNameEl) targetNameEl.textContent = player.name.toUpperCase();
@@ -1253,6 +1384,92 @@ class App {
     const modal = document.getElementById('player-profile-modal');
     if (modal) modal.classList.add('hidden');
     this.activeModalPlayer = null;
+  }
+
+  async inspectPlayerTrack(targetUserId) {
+    if (!targetUserId) return;
+    try {
+      this.closePlayerProfile();
+      const resp = await fetch(`/api/social/track/${targetUserId}`, { headers: this.getHeaders() });
+      if (!resp.ok) {
+        this.showToast('⚠️ Could not load explorer trail.');
+        return;
+      }
+      const data = await resp.json();
+
+      // Switch to Map Screen
+      this.showScreen('screen-map', 1);
+
+      // Render Trail on Map
+      this.mapCtrl.renderUserTrail(data.points, { name: data.display_name });
+
+      // Update Inspector Floating Banner
+      const banner = document.getElementById('trail-inspector-banner');
+      const avatarEl = document.getElementById('trail-inspector-avatar');
+      const titleEl = document.getElementById('trail-inspector-title');
+      const statsEl = document.getElementById('trail-inspector-stats');
+
+      if (avatarEl) avatarEl.textContent = data.avatar_emoji || '🏃';
+      if (titleEl) titleEl.textContent = `${data.display_name}'s Track`;
+      if (statsEl) {
+        const kmStr = (data.distance_m / 1000).toFixed(2);
+        const mins = Math.round(data.duration_s / 60);
+        statsEl.textContent = `${kmStr} km · ${mins} mins · ${data.track_title}`;
+      }
+      if (banner) banner.classList.remove('hidden');
+
+      cues.playDiscoveredCue();
+      this.showToast(`🗺️ Inspecting ${data.display_name}'s verified outdoor trail!`);
+    } catch (e) {
+      console.error('Failed to inspect player track', e);
+      this.showToast('⚠️ Failed to load track route.');
+    }
+  }
+
+  closeTrailInspector() {
+    this.mapCtrl.clearUserTrail();
+    const banner = document.getElementById('trail-inspector-banner');
+    if (banner) banner.classList.add('hidden');
+    this.mapCtrl.centerOnUser();
+    this.showToast('Returned to your live location.');
+  }
+
+  async toggleFollow(targetUserId) {
+    if (!targetUserId || targetUserId === this.userId) return;
+
+    const player = (this.currentLeaderboardData || []).find((p) => p.id === targetUserId);
+    const isCurrentlyFriend = player ? Boolean(player.is_friend) : false;
+
+    const endpoint = isCurrentlyFriend ? `/api/friends/unfollow/${targetUserId}` : `/api/friends/follow/${targetUserId}`;
+
+    try {
+      const resp = await fetch(endpoint, {
+        method: 'POST',
+        headers: this.getHeaders()
+      });
+
+      if (resp.ok) {
+        const res = await resp.json();
+        const nowFollowing = Boolean(res.is_following);
+        if (player) player.is_friend = nowFollowing;
+
+        // Update follow button in modal if open
+        const followBtn = document.getElementById('btn-profile-follow');
+        const followText = document.getElementById('btn-profile-follow-text');
+        if (followBtn) {
+          followBtn.classList.toggle('following', nowFollowing);
+          if (followText) followText.textContent = nowFollowing ? 'FOLLOWING' : 'FOLLOW';
+        }
+
+        if (nowFollowing) cues.playCollectedCue();
+        this.showToast(nowFollowing ? `🎉 Following ${player?.name || 'explorer'}!` : `Unfollowed ${player?.name || 'explorer'}.`);
+
+        await this.fetchFriendsRoster();
+        this.fetchLeaderboard(this.currentLeaderboardScope);
+      }
+    } catch (e) {
+      this.showToast('⚠️ Action failed. Check connection.');
+    }
   }
 
   handleProfileChallenge() {
@@ -1480,6 +1697,62 @@ class App {
     const btnLogout = document.getElementById('btn-logout-account');
     if (btnLogout) {
       btnLogout.addEventListener('click', () => this.handleLogout());
+    }
+
+    // Onboarding / First-time Auth Modal Controls
+    const obTabLogin = document.getElementById('onboard-tab-login');
+    const obTabSignup = document.getElementById('onboard-tab-signup');
+    const obNameField = document.getElementById('onboard-field-display-name');
+    const obSubmitBtn = document.getElementById('btn-onboard-submit-auth');
+    const obCloseBtn = document.getElementById('btn-close-onboard-auth');
+    const obGuestBtn = document.getElementById('btn-onboard-quick-guest');
+
+    if (obTabLogin && obTabSignup) {
+      obTabLogin.addEventListener('click', () => {
+        this.onboardAuthMode = 'login';
+        obTabLogin.classList.add('active');
+        obTabSignup.classList.remove('active');
+        if (obNameField) obNameField.classList.add('hidden');
+        if (obSubmitBtn) obSubmitBtn.textContent = '🚀 Log In & Load Data';
+      });
+
+      obTabSignup.addEventListener('click', () => {
+        this.onboardAuthMode = 'signup';
+        obTabSignup.classList.add('active');
+        obTabLogin.classList.remove('active');
+        if (obNameField) obNameField.classList.remove('hidden');
+        if (obSubmitBtn) obSubmitBtn.textContent = '✨ Create Account & Start Walking';
+      });
+    }
+
+    if (obSubmitBtn) {
+      obSubmitBtn.addEventListener('click', () => this.handleOnboardAuthSubmit());
+    }
+    if (obCloseBtn) {
+      obCloseBtn.addEventListener('click', () => this.quickGuestAuth());
+    }
+    if (obGuestBtn) {
+      obGuestBtn.addEventListener('click', () => this.quickGuestAuth());
+    }
+
+    // Player Profile Modal Actions
+    const btnFollow = document.getElementById('btn-profile-follow');
+    if (btnFollow) {
+      btnFollow.addEventListener('click', () => {
+        if (this.activeModalPlayer) this.toggleFollow(this.activeModalPlayer.id);
+      });
+    }
+
+    const btnViewTrack = document.getElementById('btn-profile-view-track');
+    if (btnViewTrack) {
+      btnViewTrack.addEventListener('click', () => {
+        if (this.activeModalPlayer) this.inspectPlayerTrack(this.activeModalPlayer.id);
+      });
+    }
+
+    const btnCloseTrail = document.getElementById('btn-close-trail-inspector');
+    if (btnCloseTrail) {
+      btnCloseTrail.addEventListener('click', () => this.closeTrailInspector());
     }
   }
 
@@ -1719,12 +1992,9 @@ class App {
     localStorage.removeItem('tgt_user_id');
     this.token = null;
     this.userId = null;
-    await this.ensureAuth();
-    await this.loadUserProfile();
-    await this.fetchPoints();
-    this.fetchLeaderboard(this.currentLeaderboardScope);
-    this.switchAccountTab('auth');
-    this.showToast('Logged out. Switched to guest mode.');
+    this.closeAccountModal();
+    this.openOnboardAuthModal();
+    this.showToast('🚪 Logged out. Choose an account to sign in.');
   }
 
   showToast(text) {
