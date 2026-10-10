@@ -1,108 +1,99 @@
 *This is a submission for the [Hacktoberfest Open-Source AI Challenge Week 1: Touch Grass](https://dev.to/challenges/hacktoberfest-week1-2026-10-05)*
 
-# TG Trails (OutLoot): Turning Screen Time into Verified Loot with Local Gemma AI & Open-Source Maps
+## What I Built
 
-My phone vibrated with a gentle double chime at minute six of an evening stroll through the neighborhood park, and I hadn't looked at the screen once. 
+Most fitness or location-based apps commit one of two fundamental mistakes:
+1. **They demand screen addiction:** They force you to stare directly at your glass display while navigating busy sidewalks and nature paths, turning an outdoor walk into another session of visual fatigue.
+2. **They are trivially spoofed:** They rely on easily faked client timers or step counts that can be simulated by shaking a phone from a desk chair or riding in a subway car.
 
-When I reached into my pocket, the bottom sheet was glowing with a freshly unearthed trail relic: a *Clover Sprout* (+10 pts) and a snippet of local botanical lore penned moments earlier by a local open-weight Gemma model running directly on my machine. No battery-draining screen vigilance, no endless push notification doom-scrolling. Just genuine foot movement turned into game progression.
+**OutLoot (TG Trails)** flips this entirely. It is a screen-light, server-authoritative exploration game designed for developers, students, and knowledge workers who spend 8+ hours a day staring at code editors and need a genuine, rewarding reason to step away, disconnect, and touch grass.
 
-This is **TG Trails (OutLoot)**.
-
----
-
-## 1. What I Built
-
-Most fitness or location-based games commit one of two sins:
-1. They demand you stare glued to your glass screen while walking across busy crosswalks.
-2. They rely on simple client countdowns or step counters that can be easily spoofed from a desk chair or while driving in traffic.
-
-**TG Trails** flips that dynamic completely. It is a screen-light, server-authoritative exploration game designed for developers and knowledge workers who spend 8+ hours a day staring at terminals and need a compelling, gameful reason to step away and touch grass:
-
-* **Server-Authoritative Movement Engine:** Your phone collects GPS samples, but the client never decides your progress. The server evaluates raw coordinates against physics filters (speed between 0.5–3.5 m/s, GPS accuracy $\le$ 30m, sample interval $\le$ 30s, and a minimum displacement threshold of 75m).
-* **Local Gemma AI Missions & Item Lore:** An open-weight Gemma model (served locally via Ollama) writes customized walking missions, outdoor tips, and mythic relic lore. If Ollama is offline or uninstalled, the game degrades to deterministic fallback missions without failing.
-* **Real-Time Active Screen Time & Grass Debt:** Built-in engagement heartbeats track when you are active on screens. When you exceed your chosen threshold (e.g., 30 minutes), a "Touch Grass" alert modal prompts you to step outside. You can even sync your daily device hours from **Google Digital Wellbeing** to compute your lifestyle Grass Debt.
-* **Live Leaderboards & Friends Squad:** Compete with friends on real-time leaderboards ranked by Grass Score (`points + outdoor_mins * 2`), see friends' live outdoor walk stats, and send tactile `🌱 Nudge` notifications to remind teammates to step outside.
-* **Double-Entry Points Ledger & Rewards:** Points earned from verified drops are recorded in an append-only ledger with cryptographic idempotency keys. Redeem points for demo sponsor perks (e.g., Trailhead discounts, sticker packs) with unique voucher codes.
+### Key Highlights:
+* **Server-Authoritative Anti-Spoofing Movement Engine:** The client collects raw GPS breadcrumbs, but never validates its own progress. The server evaluates coordinates against physics constraints (speed between 0.5–3.5 m/s, GPS horizontal accuracy ≤ 30m, sample interval ≤ 30s, and a minimum displacement threshold of 75m) to ensure only genuine outdoor foot travel earns rewards.
+* **Local Gemma AI Storytelling & Quests:** A local open-weight **Gemma model** (`gemma2:2b` via Ollama) serves as the game master. It generates dynamic outdoor scavenger quests, walking tips, and mythic relic lore (like *Clover Sprouts*, *Dewdrop Crystals*, and *Ancient Acorns*) without sending any location data to third-party cloud APIs.
+* **Active Screen Time Heartbeats & Grass Debt:** A background engagement tracker monitors active mouse, keyboard, and touch interactions. When you exceed your threshold (e.g., 30 minutes of continuous screen time), a frosted-glass **Touch Grass Alert** modal nudges you to take a walk. You can also import daily screen hours from **Google Digital Wellbeing** to calculate your *Grass Debt* (15 outdoor minutes required per hour of screen time).
+* **Social Leaderboard, Follow System & Trail Inspector:** Compete on a global leaderboard ranked by Grass Score (`points + outdoor_mins * 2`). Follow teammates, send tactile `🌱 Nudge` alerts to get friends outside, and click **`🗺️ Trail`** on any player to inspect their verified outdoor walking path directly on the retro dark-mode map!
+* **Double-Entry Points Ledger & Real Perks:** All points are recorded in an append-only ledger with cryptographic idempotency keys. Redeem points for promotional partner vouchers with unique redemption codes.
+* **Zero Commercial API Keys & 100% Open Data:** Built with OpenStreetMap (OSM) and Leaflet using custom CSS dark styling. No Mapbox/Google Maps billing, no watermarks, and no third-party telemetry.
 
 ---
 
-## 2. Demo
+## Demo
 
-* **Live Cloud Deployment (Render):** [https://outloot-tgtrails.onrender.com](https://outloot-tgtrails.onrender.com)
-* **1-Click Deploy to Render:** [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/devanshu-puri/OutLoot)
-* **Live GitHub Repository:** [https://github.com/devanshu-puri/OutLoot](https://github.com/devanshu-puri/OutLoot)
-* **Local Web App:** Vanilla JS + CSS + Leaflet running over FastAPI at `http://127.0.0.1:8000/`.
-* **Zero External API Keys:** Powered by 100% free, community-hosted **OpenStreetMap (OSM)** and local open-weight AI.
+* **Live Deployed App (Render):** [https://outloot-tgtrails.onrender.com](https://outloot-tgtrails.onrender.com)
+* **Local Run:** Run `uvicorn server.main:app --reload` and visit `http://127.0.0.1:8000/`.
+* **Zero-Setup PWA:** Fully responsive across mobile browsers and desktops with a retro cyber/pixel aesthetic.
 
 ---
 
-## 3. Architecture & How I Built It
+## Code
 
-The application is structured into four decoupled layers:
+{% github devanshu-puri/OutLoot %}
 
-```mermaid
-graph TD
-    Client[Vanilla PWA + Leaflet OSM] -->|Raw GPS Batches / Heartbeats| API[FastAPI Server]
-    API --> Movement[Server Movement Evaluator]
-    API --> Ledger[Append-Only Points Ledger]
-    API --> AI[Local Gemma AI Engine / Ollama]
-    Movement --> DB[(SQLite WAL Mode)]
-    Ledger --> DB
-    AI -.->|Fallback Missions if Offline| API
+* **GitHub Repository:** [https://github.com/devanshu-puri/OutLoot](https://github.com/devanshu-puri/OutLoot)
+* **License:** MIT Open Source
+* **Test Suite:** 61 automated unit and integration tests passing (`python -m pytest`) covering physics filters, ledger accounting, authentication, trail rendering, and local Gemma fallbacks.
+
+---
+
+## How I Built It
+
+OutLoot is built with a focus on simplicity, offline resilience, and zero cloud API dependencies:
+
+### 1. Architecture Overview
+```
+┌────────────────────────────────────────────────────────┐
+│  Frontend (Vanilla HTML5 / CSS3 / Leaflet 1.9.4 OSM)   │
+│  • PWA Shell  • Audio Chimes  • Trail Inspector Map    │
+└──────────────────────────┬─────────────────────────────┘
+                           │ Raw GPS Batches / Heartbeats
+┌──────────────────────────▼─────────────────────────────┐
+│  Backend (FastAPI / Python 3.12 / Pydantic v2)         │
+│  • Movement Evaluator (Haversine & Physics Gates)      │
+│  • Double-Entry Points Ledger (Idempotent tx)          │
+│  • Social System (Follows, Leaderboard, GPS Tracks)    │
+└──────────────┬───────────────────────────┬─────────────┘
+               │                           │
+┌──────────────▼────────────┐ ┌────────────▼─────────────┐
+│ SQLite (WAL Mode, ACID)   │ │ Local Gemma AI Engine    │
+│ • Users, Drops, Tracks    │ │ (Ollama gemma2:2b +      │
+│ • Ledger Transactions     │ │ 12-Mission Fallback Pack)│
+└───────────────────────────┘ └──────────────────────────┘
 ```
 
-### The Technical Stack:
-* **Backend:** Python 3.12+ / FastAPI, Pydantic v2 schemas, SQLite in WAL mode with foreign keys and strict transaction managers (`tx()`).
-* **Frontend:** Vanilla HTML5 + CSS3 + Leaflet 1.9.4 with zero build steps or bundlers.
-* **Open-Source Mapping:** Pure OpenStreetMap standard tiles (`https://tile.openstreetmap.org/`) combined with a custom CSS contrast/inversion filter (`filter: invert(100%) hue-rotate(180deg) brightness(82%) contrast(108%)`) to provide a sleek, high-contrast dark mode map with **zero commercial API keys and zero watermarks**.
-* **AI Engine:** Google's Gemma (`gemma4:12b` / `gemma2:2b`) running via Ollama locally. Requests are validated strictly against Pydantic schemas with an 8-second timeout, input sanitization against banned exploit phrases, and a 12-mission fallback pack.
-* **Test Suite:** **60 green pytest unit tests** covering state transitions, geodesic haversine math, ledger double-entry math, replay-attack prevention, and AI fallbacks, accompanied by an 11-step end-to-end integration test runner (`tests/verify_mvp2.py`).
+### 2. Technologies Used:
+* **AI Engine:** Google's **Gemma** open-weight model (`gemma2:2b` / `gemma:7b`) running locally via **Ollama**. Responses are strictly constrained to JSON schemas with prompt sanitization, an 8-second circuit breaker, and an offline fallback pack of 12 hand-crafted missions ensuring 100% uptime even on remote trails without internet.
+* **Server & Logic:** Python 3.12, FastAPI, and Pydantic v2 schemas. SQLite in WAL mode with strict foreign key constraints and ACID transaction managers.
+* **Mapping:** Leaflet 1.9.4 and OpenStreetMap standard tiles enhanced with CSS inversion filters (`filter: invert(100%) hue-rotate(180deg) brightness(82%) contrast(108%)`), delivering a clean dark cyber aesthetic without commercial API keys or tile watermarks.
+* **Screen-Light UX:** Screen Wake Lock API and audio/haptic chimes allow players to keep the app active in their pocket at minimum screen brightness.
 
 ---
 
-## 4. Real-Time Screen Time, Thresholds & Android Digital Wellbeing
+## Why Does Open Innovation Matter?
 
-One of the core requests of the challenge was measuring real screen time against outdoor physical activity.
-
-### A. Real-Time Screen Time Heartbeats
-The client listens for user engagement (`mousemove`, `keydown`, `touchstart`, `visibilitychange`). Every 15 seconds, the client sends an active heartbeat to `POST /api/screentime/heartbeat`. The server tracks continuous screen streaks against the user's configurable threshold (15m, 30m, 45m, 60m). When the threshold is crossed, a frosted-glass **Touch Grass Alert Modal** appears with a gentle audio chime. Starting an outdoor walk immediately resets the streak to zero!
-
-### B. Android Digital Wellbeing Sync & Grass Debt
-Because Android's Digital Wellbeing does not have a public one-tap REST API, OutLoot provides an Android Wellbeing sync extractor (`POST /api/screentime/import`). You enter today's screen hours (e.g., 4.5 hours from your Digital Wellbeing dashboard), and OutLoot computes your **Grass Debt** (15 minutes of outdoor walking per hour of screen time).
-
-### C. Live Friends Squad & Nudges
-Friends can be added by user ID or display name (`POST /api/friends/add`). The social tab displays friends' live walking status, outdoor minutes, and an interactive **`🌱 Nudge`** button that delivers real-time notifications (`"Step away from the IDE and touch grass with me!"`) to a teammate's screen.
+1. **Absolute Location Privacy:** Geolocation breadcrumbs and daily movement patterns are deeply personal. Sending real-time coordinates to proprietary cloud AI providers risks leaking sensitive physical routines. By running open-weight Gemma models locally on the device or self-hosted server, your physical whereabouts never leave your custody.
+2. **Separation of Determinism and Creativity:** Core game economics (points, anti-spoofing verification, vouchers) must remain 100% deterministic and auditable. Open-source architecture ensures open-weight AI is dedicated solely to creative tasks (quests, lore, and wellbeing coaching), while deterministic code guarantees fairness.
+3. **No Hidden Costs, Rate Limits, or Paywalls:** Proprietary APIs inevitably deprecate endpoints, introduce per-token costs, or enforce usage caps. Open-source AI and community OpenStreetMap data make OutLoot completely free to self-host, fork, and operate forever.
+4. **Resilience in Nature:** True outdoor exploration often happens in dead zones with zero cellular connectivity. Open-weight models and offline fallback systems ensure the game keeps working whether you are in a downtown park or a secluded mountain ridge.
 
 ---
 
-## 5. Why Does Open Innovation Matter?
+## My Agent Session
 
-1. **True Location Privacy:** Geolocation data and outdoor habits are sensitive. When using cloud-based proprietary AI APIs, sending location-adjacent context leaks behavioral patterns to third-party servers. With an open-weight Gemma model running locally, prompts never leave your device.
-2. **Deterministic Fairness + Creative Lore:** Game mechanics (points, eligibility, fraud prevention, vouchers) must remain 100% deterministic code. Open architecture allows confining the AI strictly to storytelling (missions, tips, relic lore) without giving a non-deterministic LLM authority over balances or state.
-3. **Zero API Cost & Total Offline Resilience:** Proprietary APIs introduce rate limits, credit expiration, and network failure points. OutLoot runs with zero API keys. When out in remote park trails with spotty cell reception, the game operates seamlessly.
-4. **No Commercial Watermarks:** When third-party tile providers (like CartoDB) suddenly add watermark overlays demanding commercial API keys, an open-source architecture allows switching directly to community OpenStreetMap tiles and applying client-side CSS dark styling in minutes.
+OutLoot was designed, implemented, tested, and deployed end-to-end with the assistance of **Antigravity** (Google DeepMind's agentic AI coding assistant). The session coordinated:
+- Drafting Pydantic schemas, database migrations, and geodesic haversine algorithms.
+- Developing the 61-test verification suite (`pytest`).
+- Integrating the local Gemma Ollama interface and fallback pipelines.
+- Automating the deployment to Render via infrastructure-as-code (`render.yaml`).
+- Interactive trail inspection and social follow mechanics.
 
----
-
-## 6. Honest Limitations & Developer Trade-Offs
-
-* **Browser Background GPS:** Mobile browsers throttle or suspend geolocation timers when the phone screen is locked. We mitigate this using the Screen Wake Lock API and audio/haptic cues so the screen can stay awake at minimum brightness while in your pocket.
-* **GPS Accuracy Jumps:** Near tall concrete buildings, GPS drift can simulate movement. We added an accuracy filter ($\le$ 30m) and speed caps (0.5 to 3.5 m/s) to discard erratic jumps.
-* **Demo Sponsor Vouchers:** Rewards in the marketplace are non-monetary promotional demonstration vouchers with cryptographic redemption codes.
+You can view the full source code and commit history directly on GitHub:
+👉 **[https://github.com/devanshu-puri/OutLoot](https://github.com/devanshu-puri/OutLoot)**
 
 ---
 
-## 7. My Agent Session
+## Prize Categories
 
-This project was built collaboratively with Google DeepMind's **Antigravity** agent, utilizing the DevRelay unified gateway for tests, schema migrations, and session management.
-
-* **Git Repository:** [https://github.com/devanshu-puri/OutLoot](https://github.com/devanshu-puri/OutLoot)
-
----
-
-## 8. Prize Categories
-
-* **Open-Source AI Challenge Week 1: Touch Grass**
-* **Best Use of Render** ($200 USD: Automated infrastructure-as-code `render.yaml` serving the FastAPI backend and PWA frontend with zero external dependencies)
-* **Best Use of Gemma** ($200 USD: Local Gemma open-weight model generating structured JSON outdoor missions, walking tips, and drop relic lore with deterministic fallback resilience)
-* **Best Use of Entire** ($100 USD: Transparent agent-assisted pair programming and development sessions managed through DevRelay)
+* **Open-Source AI Challenge Week 1: Touch Grass** (Primary Track)
+* **Best Use of Gemma** (Local open-weight Gemma model generating structured JSON quests, seasonal walking tips, and biome relic lore with offline fallback guarantees)
+* **Best Use of Render** (Automated infrastructure-as-code deployment on Render serving FastAPI backend and PWA frontend with zero external dependencies)
