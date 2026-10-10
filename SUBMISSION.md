@@ -41,6 +41,9 @@ Most fitness or location-based apps commit one of two fundamental mistakes:
 OutLoot is built with a focus on simplicity, offline resilience, and zero cloud API dependencies:
 
 ### 1. Architecture Overview
+
+![OutLoot Architecture Overview](https://raw.githubusercontent.com/devanshu-puri/OutLoot/main/architecture_overview.png)
+
 ```
 ┌────────────────────────────────────────────────────────┐
 │  Frontend (Vanilla HTML5 / CSS3 / Leaflet 1.9.4 OSM)   │
