@@ -56,6 +56,7 @@ class SessionResponse(BaseModel):
     points_earned: int = 0
     collections_count: int = 0
     next_item: Optional[SpawnedItemHint] = None
+    nearby_items: List[SpawnedItemHint] = Field(default_factory=list)
     invalid_reason: Optional[str] = None
 
 
@@ -87,6 +88,7 @@ class SampleBatchResp(BaseModel):
     distance_m: float
     item_available: bool
     next_item: Optional[SpawnedItemHint] = None
+    nearby_items: List[SpawnedItemHint] = Field(default_factory=list)
 
 
 class CollectReq(BaseModel):
@@ -266,3 +268,59 @@ class LeaderboardResp(BaseModel):
     user_rank: int
     total_walkers: int
     time_window: str = "Live All-Time"
+
+
+# --- Profile & Account Management ---
+
+class RegisterReq(BaseModel):
+    username: str = Field(min_length=3, max_length=30)
+    password: str = Field(min_length=4, max_length=60)
+    display_name: Optional[str] = None
+
+
+class LoginReq(BaseModel):
+    username: str
+    password: str
+
+
+class AuthResponse(BaseModel):
+    user_id: str
+    token: str
+    username: Optional[str] = None
+    display_name: str
+    avatar_emoji: str = "🌱"
+    bio: Optional[str] = None
+    points: int = 0
+
+
+class ProfileUpdateReq(BaseModel):
+    display_name: Optional[str] = None
+    avatar_emoji: Optional[str] = None
+    bio: Optional[str] = None
+    status_msg: Optional[str] = None
+
+
+class DailyStatItem(BaseModel):
+    stat_date: str
+    screen_time_mins: float
+    distance_m: float
+    points_collected: int
+    items_collected: int
+    walk_time_mins: float
+
+
+class ProfileResponse(BaseModel):
+    user_id: str
+    username: Optional[str] = None
+    display_name: str
+    avatar_emoji: str
+    bio: Optional[str] = None
+    status_msg: Optional[str] = None
+    total_points: int
+    outdoor_mins: float
+    screen_mins: float
+    touch_grass_ratio: float
+    rank: int
+    today_stats: DailyStatItem
+    recent_daily: List[DailyStatItem] = Field(default_factory=list)
+

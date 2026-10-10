@@ -6,7 +6,7 @@
   <title>OutLoot 🌿✦</title>
   <link rel="manifest" href="/manifest.json" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-  <link rel="stylesheet" href="/style.css?v=2.8" />
+  <link rel="stylesheet" href="/style.css?v=3.0" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script src="/assets/lottie.min.js"></script>
   <script src="/assets/walk_shoes_data.js"></script>
@@ -28,6 +28,10 @@
         <div id="user-points-display" class="points-pill" title="Total Authoritative Points">
           0 pts
         </div>
+        <button id="btn-user-profile-header" class="profile-header-pill" title="Profile & Daily Stats">
+          <span id="header-avatar-emoji">🌱</span>
+          <span id="header-username-text">Profile</span>
+        </button>
       </div>
     </header>
 
@@ -537,6 +541,150 @@
       </div>
     </section>
 
+    <!-- USER ACCOUNT, PROFILE & DAILY STATS MODAL -->
+    <div id="user-account-modal" class="pixel-modal-backdrop hidden">
+      <div class="pixel-profile-card user-account-card">
+        <button id="btn-close-account-modal" class="pixel-modal-close-btn" title="Close Profile">✕</button>
+
+        <!-- Account Modal Navigation Tabs -->
+        <div class="profile-nav-tabs">
+          <button id="tab-btn-daily-stats" class="profile-nav-tab active">📊 Daily Stats</button>
+          <button id="tab-btn-edit-profile" class="profile-nav-tab">✏️ Edit Profile</button>
+          <button id="tab-btn-auth-account" class="profile-nav-tab">🔐 Account</button>
+        </div>
+
+        <!-- VIEW 1: DAILY STATS & TOUCH GRASS SUMMARY -->
+        <div id="view-profile-daily" class="profile-modal-view">
+          <div class="profile-header-block">
+            <div id="my-profile-avatar-frame" class="profile-avatar-frame my-avatar">🌱</div>
+            <h2 id="my-profile-name" class="profile-name">Trail Explorer</h2>
+            <div id="my-profile-username" class="profile-handle">@guest_walker</div>
+            <div id="my-profile-rank-badge" class="profile-rank-chip">RANK #1 · TRAIL ROOKIE</div>
+          </div>
+
+          <div style="font-size:11px; font-weight:800; color:var(--text-faint); text-transform:uppercase; margin:8px 0 4px; letter-spacing:0.5px;">Today's Verified Activity</div>
+          <div class="profile-stats-grid">
+            <div class="pixel-stat-box">
+              <div class="stat-label">WALKED TODAY</div>
+              <div id="stat-today-dist" class="stat-val" style="color:var(--grass-light);">0 m</div>
+            </div>
+            <div class="pixel-stat-box">
+              <div class="stat-label">SCREEN TIME</div>
+              <div id="stat-today-screen" class="stat-val" style="color:var(--violet-soft);">0m</div>
+            </div>
+            <div class="pixel-stat-box">
+              <div class="stat-label">POINTS EARNED</div>
+              <div id="stat-today-points" class="stat-val" style="color:var(--amber);">+0 pts</div>
+            </div>
+            <div class="pixel-stat-box">
+              <div class="stat-label">LOOT COLLECTED</div>
+              <div id="stat-today-items" class="stat-val" style="color:#38bdf8;">0 items</div>
+            </div>
+          </div>
+
+          <div class="profile-h2h-box" style="margin-top:10px;">
+            <div class="h2h-header">
+              <span>OUTDOOR RATIO TODAY</span>
+              <span id="stat-today-ratio-text" style="color:var(--grass-light); font-weight:800;">0%</span>
+            </div>
+            <div class="h2h-bar-track">
+              <div id="stat-today-ratio-bar" class="h2h-bar-you" style="width: 0%;"></div>
+            </div>
+          </div>
+
+          <!-- 7-Day Daily History Log -->
+          <div style="margin-top:14px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:var(--text-faint); text-transform:uppercase; letter-spacing:0.5px;">Recent Daily History</span>
+              <span id="history-streak-label" class="hero-pill-badge" style="font-size:10px; padding:2px 8px;">ACTIVE STREAK 🔥</span>
+            </div>
+            <div id="profile-daily-history-list" class="daily-history-stack">
+              <!-- Populated dynamically -->
+            </div>
+          </div>
+        </div>
+
+        <!-- VIEW 2: EDIT PROFILE -->
+        <div id="view-profile-edit" class="profile-modal-view hidden">
+          <div style="font-size:12px; color:var(--text-mute); margin-bottom:12px;">Customize your explorer avatar &amp; trail motto visible on the leaderboard:</div>
+          
+          <div style="margin-bottom:12px;">
+            <label style="font-size:11px; font-weight:800; color:var(--text-faint); text-transform:uppercase;">Choose Avatar Emoji</label>
+            <div class="avatar-emoji-picker-row">
+              <button class="avatar-pick-btn" data-emoji="🌱">🌱</button>
+              <button class="avatar-pick-btn" data-emoji="🦊">🦊</button>
+              <button class="avatar-pick-btn" data-emoji="🏃‍♂️">🏃‍♂️</button>
+              <button class="avatar-pick-btn" data-emoji="🌲">🌲</button>
+              <button class="avatar-pick-btn" data-emoji="🎒">🎒</button>
+              <button class="avatar-pick-btn" data-emoji="⚡">⚡</button>
+              <button class="avatar-pick-btn" data-emoji="👑">👑</button>
+              <button class="avatar-pick-btn" data-emoji="🦉">🦉</button>
+            </div>
+          </div>
+
+          <div style="margin-bottom:12px;">
+            <label style="font-size:11px; font-weight:800; color:var(--text-faint); text-transform:uppercase;">Display Name</label>
+            <input id="input-edit-display-name" class="pixel-input-field" type="text" placeholder="Your trail name..." style="width:100%; margin-top:4px;" />
+          </div>
+
+          <div style="margin-bottom:12px;">
+            <label style="font-size:11px; font-weight:800; color:var(--text-faint); text-transform:uppercase;">Trail Motto / Bio</label>
+            <input id="input-edit-bio" class="pixel-input-field" type="text" placeholder="e.g. Touching grass daily!" style="width:100%; margin-top:4px;" />
+          </div>
+
+          <button id="btn-save-profile" class="pixel-action-btn primary" style="width:100%; margin-top:8px;">
+            💾 Save Profile Changes
+          </button>
+          <div id="profile-edit-toast" class="pixel-toast-msg" style="margin-top:6px;"></div>
+        </div>
+
+        <!-- VIEW 3: ACCOUNT AUTH (LOGIN / SIGN UP / LOGOUT) -->
+        <div id="view-profile-auth" class="profile-modal-view hidden">
+          <!-- State A: Already Authenticated with Username -->
+          <div id="auth-state-logged-in" class="hidden">
+            <div class="auth-logged-card">
+              <div style="font-size:32px;">🛡️</div>
+              <h3 id="logged-in-username-title" style="margin:4px 0; color:#fff;">@username</h3>
+              <p style="font-size:12px; color:var(--text-mute); margin:0;">Your account is securely saved. All daily walks and points are backed up in real time.</p>
+              <button id="btn-logout-account" class="pixel-action-btn secondary" style="width:100%; margin-top:14px; background:rgba(239,68,68,0.15); border-color:#ef4444; color:#ef4444;">
+                🚪 Switch Account / Log Out
+              </button>
+            </div>
+          </div>
+
+          <!-- State B: Login / Sign Up Form -->
+          <div id="auth-state-form">
+            <div class="auth-form-tabs">
+              <button id="btn-switch-tab-login" class="auth-sub-tab active">Log In</button>
+              <button id="btn-switch-tab-signup" class="auth-sub-tab">Create Account</button>
+            </div>
+
+            <div style="margin-top:12px; display:flex; flex-direction:column; gap:10px;">
+              <div>
+                <label style="font-size:11px; font-weight:800; color:var(--text-faint); text-transform:uppercase;">Username</label>
+                <input id="input-auth-username" class="pixel-input-field" type="text" placeholder="Enter username..." style="width:100%; margin-top:4px;" autocomplete="username" />
+              </div>
+
+              <div id="auth-field-display-name" class="hidden">
+                <label style="font-size:11px; font-weight:800; color:var(--text-faint); text-transform:uppercase;">Display Name</label>
+                <input id="input-auth-display-name" class="pixel-input-field" type="text" placeholder="Enter full trail name..." style="width:100%; margin-top:4px;" />
+              </div>
+
+              <div>
+                <label style="font-size:11px; font-weight:800; color:var(--text-faint); text-transform:uppercase;">Password</label>
+                <input id="input-auth-password" class="pixel-input-field" type="password" placeholder="Enter password..." style="width:100%; margin-top:4px;" autocomplete="current-password" />
+              </div>
+
+              <button id="btn-submit-auth" class="pixel-action-btn primary" style="width:100%; margin-top:6px;">
+                🚀 Log In
+              </button>
+              <div id="auth-feedback-toast" class="pixel-toast-msg"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- TOUCH GRASS ALERT MODAL OVERLAY -->
     <div id="touch-grass-modal" class="touch-grass-modal-backdrop">
       <div class="touch-grass-modal">
@@ -623,6 +771,6 @@
     </nav>
   </div>
 
-  <script type="module" src="/app.js?v=2.8"></script>
+  <script type="module" src="/app.js?v=3.0"></script>
 </body>
 </html>

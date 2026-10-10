@@ -69,8 +69,8 @@ def spawn_next_item(
             name=str(existing["name"]),
             category=str(existing["category"]),
             status=existing["status"],
-            lat=float(existing["lat"]) if existing["status"] == "AVAILABLE" else None,
-            lon=float(existing["lon"]) if existing["status"] == "AVAILABLE" else None,
+            lat=float(existing["lat"]),
+            lon=float(existing["lon"]),
             distance_m=dist,
             bearing_deg=brg
         )
@@ -99,11 +99,81 @@ def spawn_next_item(
         name=str(item_def["name"]),
         category=str(item_def["category"]),
         status="LOCKED",
-        lat=None,
-        lon=None,
+        lat=target_lat,
+        lon=target_lon,
         distance_m=dist_m,
         bearing_deg=bearing_val
     )
+
+
+def get_nearby_items_for_session(
+    conn: sqlite3.Connection,
+    session_id: str,
+    origin_lat: float,
+    origin_lon: float,
+    desired_count: int = 3
+) -> list[SpawnedItemHint]:
+    """
+    Ensure multiple discoverable items are spawned around the user's walk path.
+    """
+    settings = get_settings()
+    cfg = settings.game_config
+
+    rows = conn.execute(
+        """
+        SELECT si.*, idf.name, idf.rarity, idf.category, idf.base_points
+        FROM spawned_items si
+        JOIN item_definitions idf ON si.item_id = idf.id
+        WHERE si.session_id = ? AND si.status IN ('LOCKED', 'AVAILABLE')
+        ORDER BY si.spawned_at ASC;
+        """,
+        (session_id,)
+    ).fetchall()
+
+    items = list(rows)
+    # If fewer than desired_count, spawn extra drops at different bearings & distances
+    while len(items) < desired_count:
+        item_def = pick_random_item_definition(conn)
+        dist_m = random.uniform(cfg.spawn.spawn_min_m * 0.9, cfg.spawn.spawn_max_m * 1.2)
+        bearing_val = random.uniform(0.0, 360.0)
+        target_lat, target_lon = destination_point(origin_lat, origin_lon, bearing_val, dist_m)
+        spawn_id = f"spw_{secrets.token_hex(8)}"
+        conn.execute(
+            """
+            INSERT INTO spawned_items (id, item_id, session_id, lat, lon, status, spawned_at)
+            VALUES (?, ?, ?, ?, ?, 'LOCKED', CURRENT_TIMESTAMP);
+            """,
+            (spawn_id, item_def["id"], session_id, target_lat, target_lon)
+        )
+        new_row = conn.execute(
+            """
+            SELECT si.*, idf.name, idf.rarity, idf.category, idf.base_points
+            FROM spawned_items si
+            JOIN item_definitions idf ON si.item_id = idf.id
+            WHERE si.id = ?;
+            """,
+            (spawn_id,)
+        ).fetchone()
+        items.append(new_row)
+
+    hints = []
+    for r in items:
+        dist = haversine_m(origin_lat, origin_lon, r["lat"], r["lon"])
+        brg = bearing_deg(origin_lat, origin_lon, r["lat"], r["lon"])
+        hints.append(SpawnedItemHint(
+            id=str(r["id"]),
+            rarity=str(r["rarity"]),
+            base_points=int(r["base_points"]),
+            name=str(r["name"]),
+            category=str(r["category"]),
+            status=r["status"],
+            lat=float(r["lat"]),
+            lon=float(r["lon"]),
+            distance_m=dist,
+            bearing_deg=brg
+        ))
+    return hints
+
 
 
 def check_and_unlock_items(
@@ -316,6 +386,9 @@ def collect_item(
             ref_id=spawn_id,
             note=f"Collected {item_row['name']} ({item_row['rarity']})"
         )
+
+        from server.services.profile import record_daily_stats
+        record_daily_stats(conn, user_id, delta_points=points_to_award, delta_items=1)
 
         # Reset session cycle progress and update origin to collection location
         conn.execute(

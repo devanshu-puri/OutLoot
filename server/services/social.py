@@ -93,6 +93,9 @@ def record_screentime_heartbeat(
             (new_total_screen, new_streak, user_id)
         )
 
+        from server.services.profile import record_daily_stats
+        record_daily_stats(conn, user_id, delta_screen_s=active_s)
+
         touch_grass_alert = new_streak >= threshold_s
         grass_debt_s = max(0.0, new_streak - threshold_s)
 
@@ -175,6 +178,9 @@ def import_digital_wellbeing(
             """,
             (new_total_s, new_streak, user_id)
         )
+
+        from server.services.profile import record_daily_stats
+        record_daily_stats(conn, user_id, delta_screen_s=screen_seconds)
 
         debt_mins = round((screen_seconds / 3600.0) * 15.0, 1) # 15 min walk per hour of screen time
         suggested_walk = max(15, int(debt_mins))

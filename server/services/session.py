@@ -40,8 +40,8 @@ def build_session_response(conn: sqlite3.Connection, session_row: sqlite3.Row, u
 
     next_item: Optional[SpawnedItemHint] = None
     if item_row:
-        lat = float(item_row["lat"]) if item_row["status"] == "AVAILABLE" else None
-        lon = float(item_row["lon"]) if item_row["status"] == "AVAILABLE" else None
+        lat = float(item_row["lat"])
+        lon = float(item_row["lon"])
         dist = None
         brg = None
         if session_row["cycle_start_lat"] is not None and session_row["cycle_start_lon"] is not None:
@@ -60,6 +60,12 @@ def build_session_response(conn: sqlite3.Connection, session_row: sqlite3.Row, u
             distance_m=dist,
             bearing_deg=brg
         )
+
+    # Fetch nearby spawned items around player's session
+    from server.services.items import get_nearby_items_for_session
+    ref_lat = float(session_row["cycle_start_lat"] or (item_row["lat"] if item_row else 13.0827))
+    ref_lon = float(session_row["cycle_start_lon"] or (item_row["lon"] if item_row else 80.2707))
+    nearby_items = get_nearby_items_for_session(conn, session_id, ref_lat, ref_lon, desired_count=3)
 
     # Calculate points earned in this session
     points_row = conn.execute(
@@ -87,6 +93,7 @@ def build_session_response(conn: sqlite3.Connection, session_row: sqlite3.Row, u
         points_earned=points_earned,
         collections_count=collections_count,
         next_item=next_item,
+        nearby_items=nearby_items,
         invalid_reason=session_row["invalid_reason"]
     )
 

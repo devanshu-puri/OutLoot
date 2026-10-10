@@ -45,6 +45,9 @@ export class MapController {
         }
       }
     };
+
+    this.itemMarkers = new Map();
+    this.selectedItemCallback = null;
   }
 
   init(defaultLat = 13.0827, defaultLon = 80.2707) {
@@ -146,32 +149,120 @@ export class MapController {
     }
   }
 
+  getItemIconEmoji(item) {
+    const name = (item.name || '').toLowerCase();
+    const rarity = (item.rarity || '').toLowerCase();
+    if (name.includes('clover') || rarity === 'common') return '🌱';
+    if (name.includes('crystal') || rarity === 'uncommon') return '💎';
+    if (name.includes('acorn') || rarity === 'rare') return '🌰';
+    if (name.includes('bloom') || rarity === 'epic') return '🌸';
+    if (name.includes('compass') || rarity === 'special') return '🧭';
+    return '✦';
+  }
+
+  getItemColor(rarity) {
+    const r = (rarity || '').toLowerCase();
+    if (r === 'common') return '#10b981';
+    if (r === 'uncommon') return '#06b6d4';
+    if (r === 'rare') return '#f59e0b';
+    if (r === 'epic') return '#ec4899';
+    if (r === 'special') return '#ffd32a';
+    return '#10b981';
+  }
+
   updateItemDrop(item, userLat, userLon, onMarkerClick) {
     if (!this.map) return;
-
-    if (!item || item.status !== 'AVAILABLE' || !item.lat || !item.lon) {
+    if (!item || !item.lat || !item.lon) {
       if (this.itemMarker) {
         this.map.removeLayer(this.itemMarker);
         this.itemMarker = null;
       }
       return;
     }
+    this.updateNearbyItems([item], userLat, userLon, onMarkerClick);
+  }
 
-    const itemIcon = L.divIcon({
-      className: 'drop-marker-container',
-      html: `<div class="drop-marker-available" title="${item.name || 'Drop Relic'}">✦</div>`,
-      iconSize: [36, 36],
-      iconAnchor: [18, 18]
+  updateNearbyItems(items, userLat, userLon, onMarkerClick) {
+    if (!this.map) return;
+    if (onMarkerClick) this.selectedItemCallback = onMarkerClick;
+
+    const validItems = (items || []).filter(it => it && it.lat != null && it.lon != null && it.status !== 'COLLECTED');
+    const currentIds = new Set(validItems.map(it => it.id));
+
+    // Remove markers that are no longer active
+    for (const [id, marker] of this.itemMarkers.entries()) {
+      if (!currentIds.has(id)) {
+        this.map.removeLayer(marker);
+        this.itemMarkers.delete(id);
+      }
+    }
+
+    // Add or update markers
+    validItems.forEach(item => {
+      const emoji = this.getItemIconEmoji(item);
+      const color = this.getItemColor(item.rarity);
+      const dist = (userLat != null && userLon != null) ? this.computeDistance(userLat, userLon, item.lat, item.lon) : (item.distance_m || 100);
+      const isNear = dist <= 35;
+      const isReady = item.status === 'AVAILABLE' || isNear;
+
+      const markerHtml = `
+        <div class="drop-marker-wrapper ${isNear ? 'in-range' : ''}" style="--rarity-color:${color};">
+          <div class="drop-radar-ring"></div>
+          <div class="drop-marker-bubble ${isReady ? 'ready' : 'locked'}">
+            <span class="drop-emoji">${emoji}</span>
+          </div>
+          <div class="drop-label-pill">
+            <span class="drop-label-name">${item.name || 'Drop'}</span>
+            <span class="drop-label-dist">${Math.round(dist)}m</span>
+          </div>
+        </div>
+      `;
+
+      const customIcon = L.divIcon({
+        className: 'loot-drop-div-icon',
+        html: markerHtml,
+        iconSize: [44, 44],
+        iconAnchor: [22, 22]
+      });
+
+      let marker = this.itemMarkers.get(item.id);
+      if (!marker) {
+        marker = L.marker([item.lat, item.lon], { icon: customIcon }).addTo(this.map);
+        marker.on('click', () => {
+          if (this.selectedItemCallback) {
+            this.selectedItemCallback(item);
+          }
+        });
+        this.itemMarkers.set(item.id, marker);
+      } else {
+        marker.setLatLng([item.lat, item.lon]);
+        marker.setIcon(customIcon);
+      }
     });
 
-    if (!this.itemMarker) {
-      this.itemMarker = L.marker([item.lat, item.lon], { icon: itemIcon }).addTo(this.map);
-      if (onMarkerClick) {
-        this.itemMarker.on('click', onMarkerClick);
-      }
-    } else {
-      this.itemMarker.setLatLng([item.lat, item.lon]);
+    // Also update this.itemMarker reference for backward compatibility
+    if (validItems.length > 0) {
+      this.itemMarker = this.itemMarkers.get(validItems[0].id);
     }
+  }
+
+  clearItemMarkers() {
+    for (const marker of this.itemMarkers.values()) {
+      if (this.map) this.map.removeLayer(marker);
+    }
+    this.itemMarkers.clear();
+    this.itemMarker = null;
+  }
+
+  computeDistance(lat1, lon1, lat2, lon2) {
+    const R = 6371000;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
   }
 
   centerOnUser() {

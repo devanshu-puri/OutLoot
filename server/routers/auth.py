@@ -5,7 +5,15 @@ from collections import defaultdict
 from typing import Dict, List, Optional
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
 from server.db import get_db, tx
-from server.schemas import AnonAuthResponse, ErrorResponse
+from server.schemas import (
+    AnonAuthResponse,
+    AuthResponse,
+    ErrorResponse,
+    LoginReq,
+    ProfileResponse,
+    ProfileUpdateReq,
+    RegisterReq,
+)
 from server.settings import get_settings
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
@@ -113,6 +121,151 @@ def create_anonymous_user(request: Request):
     )
 
 
+@router.post("/register", response_model=AuthResponse)
+def register_user(
+    payload: RegisterReq,
+    request: Request,
+    authorization: Optional[str] = Header(None)
+):
+    from server.services.profile import hash_password
+    from server.services.points import get_points_balance
+
+    uname = payload.username.strip().lower()
+    if not uname or len(uname) < 3:
+        raise HTTPException(status_code=400, detail={"error_code": "INVALID_USERNAME", "message": "Username must be at least 3 characters."})
+
+    with get_db() as conn:
+        with tx(conn):
+            # Check existing username
+            existing = conn.execute("SELECT id FROM users WHERE LOWER(username) = ?;", (uname,)).fetchone()
+            if existing:
+                raise HTTPException(status_code=400, detail={"error_code": "USERNAME_TAKEN", "message": f"Username '{payload.username}' is already taken."})
+
+            # Check if there is an existing anonymous user in session to upgrade
+            upgraded_user_id = None
+            if authorization and authorization.startswith("Bearer "):
+                raw_tok = authorization.split(" ", 1)[1].strip()
+                tok_h = hash_token(raw_tok)
+                inst = conn.execute("SELECT user_id FROM installations WHERE token_hash = ?;", (tok_h,)).fetchone()
+                if inst:
+                    cur_u = conn.execute("SELECT id, username FROM users WHERE id = ?;", (inst["user_id"],)).fetchone()
+                    if cur_u and not cur_u["username"]:
+                        upgraded_user_id = cur_u["id"]
+
+            user_id = upgraded_user_id or f"usr_{secrets.token_hex(8)}"
+            disp_name = payload.display_name.strip() if payload.display_name and payload.display_name.strip() else payload.username.strip()
+            hashed, salt = hash_password(payload.password)
+            pw_record = f"{salt}:{hashed}"
+
+            if upgraded_user_id:
+                conn.execute(
+                    "UPDATE users SET username = ?, password_hash = ?, display_name = ? WHERE id = ?;",
+                    (uname, pw_record, disp_name, user_id)
+                )
+            else:
+                conn.execute(
+                    "INSERT INTO users (id, username, password_hash, display_name, status) VALUES (?, ?, ?, ?, 'ACTIVE');",
+                    (user_id, uname, pw_record, disp_name)
+                )
+
+            # Generate fresh token
+            raw_token = f"tgt_{secrets.token_urlsafe(32)}"
+            token_hashed = hash_token(raw_token)
+            inst_id = f"inst_{secrets.token_hex(8)}"
+            conn.execute(
+                "INSERT INTO installations (id, user_id, token_hash) VALUES (?, ?, ?);",
+                (inst_id, user_id, token_hashed)
+            )
+
+            pts = get_points_balance(conn, user_id)
+            user_row = conn.execute("SELECT * FROM users WHERE id = ?;", (user_id,)).fetchone()
+
+    return AuthResponse(
+        user_id=user_id,
+        token=raw_token,
+        username=uname,
+        display_name=disp_name,
+        avatar_emoji=str(user_row["avatar_emoji"] if "avatar_emoji" in user_row.keys() and user_row["avatar_emoji"] else "🌱"),
+        bio=str(user_row["bio"] if "bio" in user_row.keys() and user_row["bio"] else "Outdoor trail explorer"),
+        points=pts
+    )
+
+
+@router.post("/login", response_model=AuthResponse)
+def login_user(payload: LoginReq, request: Request):
+    from server.services.profile import verify_password
+    from server.services.points import get_points_balance
+
+    uname = payload.username.strip().lower()
+    with get_db() as conn:
+        user = conn.execute("SELECT * FROM users WHERE LOWER(username) = ?;", (uname,)).fetchone()
+        if not user or not user["password_hash"] or not verify_password(payload.password, user["password_hash"]):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail={"error_code": "INVALID_CREDENTIALS", "message": "Incorrect username or password"}
+            )
+
+        user_id = str(user["id"])
+        raw_token = f"tgt_{secrets.token_urlsafe(32)}"
+        token_hashed = hash_token(raw_token)
+        inst_id = f"inst_{secrets.token_hex(8)}"
+        with tx(conn):
+            conn.execute(
+                "INSERT INTO installations (id, user_id, token_hash) VALUES (?, ?, ?);",
+                (inst_id, user_id, token_hashed)
+            )
+
+        pts = get_points_balance(conn, user_id)
+
+    return AuthResponse(
+        user_id=user_id,
+        token=raw_token,
+        username=uname,
+        display_name=str(user["display_name"] or uname),
+        avatar_emoji=str(user["avatar_emoji"] if "avatar_emoji" in user.keys() and user["avatar_emoji"] else "🌱"),
+        bio=str(user["bio"] if "bio" in user.keys() and user["bio"] else "Outdoor trail explorer"),
+        points=pts
+    )
+
+
+@router.get("/me", response_model=AuthResponse)
+def get_me(user_id: str = Depends(get_current_user_id)):
+    from server.services.points import get_points_balance
+    with get_db() as conn:
+        user = conn.execute("SELECT * FROM users WHERE id = ?;", (user_id,)).fetchone()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        pts = get_points_balance(conn, user_id)
+
+    return AuthResponse(
+        user_id=user_id,
+        token="",
+        username=user["username"] if "username" in user.keys() else None,
+        display_name=str(user["display_name"] or "Trail Walker"),
+        avatar_emoji=str(user["avatar_emoji"] if "avatar_emoji" in user.keys() and user["avatar_emoji"] else "🌱"),
+        bio=str(user["bio"] if "bio" in user.keys() and user["bio"] else "Outdoor trail explorer"),
+        points=pts
+    )
+
+
 @router.get("/verify")
 def verify_token(user_id: str = Depends(get_current_user_id)):
     return {"user_id": user_id, "status": "authenticated"}
+
+
+@router.get("/profile", response_model=ProfileResponse)
+def get_my_profile(user_id: str = Depends(get_current_user_id)):
+    from server.services.profile import get_user_profile
+    with get_db() as conn:
+        return get_user_profile(conn, user_id)
+
+
+@router.post("/profile/update", response_model=ProfileResponse)
+def update_my_profile(
+    payload: ProfileUpdateReq,
+    user_id: str = Depends(get_current_user_id)
+):
+    from server.services.profile import update_user_profile
+    with get_db() as conn:
+        return update_user_profile(conn, user_id, payload)
+

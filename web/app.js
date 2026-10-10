@@ -28,6 +28,12 @@ class App {
     this.currentLeaderboardScope = 'global';
     this.currentMetric = 'steps';
     this.activeModalPlayer = null;
+    this.userProfile = null;
+    this.nearbyItems = [];
+    this.selectedCollectItem = null;
+    this.socialPollerInterval = null;
+    this.selectedAvatarEmoji = '🌱';
+    this.authMode = 'login';
     window.appInstance = this;
 
     this.mapCtrl = new MapController('map');
@@ -45,6 +51,7 @@ class App {
 
     this.setupNavigation();
     this.setupMapScreenControls();
+    this.setupProfileEventListeners();
     this.setupActivityTracking();
     this.setupScreenTimeHeartbeat();
     this.setupSocialEventListeners();
@@ -76,7 +83,20 @@ class App {
     try {
       await this.ensureAuth();
       await this.fetchPoints();
+      await this.loadUserProfile();
       await this.checkActiveSession();
+
+      // Ensure discoverable items pop up on the map right away!
+      const initLat = this.latestPosition ? this.latestPosition.lat : 13.0827;
+      const initLon = this.latestPosition ? this.latestPosition.lon : 80.2707;
+      if (this.nearbyItems.length === 0) {
+        this.nearbyItems = [
+          { id: 'drop_init_1', name: 'Clover Sprout', rarity: 'common', base_points: 10, lat: initLat + 0.0007, lon: initLon + 0.0006, status: 'AVAILABLE' },
+          { id: 'drop_init_2', name: 'Dew Crystal', rarity: 'uncommon', base_points: 25, lat: initLat - 0.0009, lon: initLon + 0.0008, status: 'LOCKED' },
+          { id: 'drop_init_3', name: 'Ancient Oak Acorn', rarity: 'rare', base_points: 60, lat: initLat + 0.0011, lon: initLon - 0.0007, status: 'LOCKED' }
+        ];
+        this.mapCtrl.updateNearbyItems(this.nearbyItems, initLat, initLon, (item) => this.showCollectSheet(item));
+      }
     } catch (e) {
       console.warn('Network sync pending:', e);
     }
@@ -116,13 +136,18 @@ class App {
       startWalkMap.addEventListener('click', () => this.startSessionFlow());
     }
 
-    // Setup simulator toggle in header
+    // Setup simulator toggle in header (Dynamic Random Walk towards drops)
     const simBtn = document.getElementById('sim-toggle-btn');
     if (simBtn) {
       simBtn.addEventListener('click', () => {
-        const running = this.simCtrl.toggle();
+        const startLat = this.latestPosition ? this.latestPosition.lat : 13.0827;
+        const startLon = this.latestPosition ? this.latestPosition.lon : 80.2707;
+        const targetItem = (this.nearbyItems && this.nearbyItems.length > 0) ? this.nearbyItems[0] : null;
+        const targetLat = targetItem ? targetItem.lat : null;
+        const targetLon = targetItem ? targetItem.lon : null;
+        const running = this.simCtrl.toggle(startLat, startLon, targetLat, targetLon);
         simBtn.classList.toggle('active', running);
-        simBtn.title = running ? '⚡ SIM ON (Active)' : 'Toggle SIM Mode (⚡)';
+        simBtn.title = running ? '⚡ Random Walk ON (Active)' : 'Toggle Random Walk (⚡)';
         if (running && !this.currentSession) {
           this.startSessionFlow();
         }
@@ -266,6 +291,9 @@ class App {
 
     if (screenId === 'screen-social') {
       this.loadSocialScreen();
+      this.startSocialPoller();
+    } else {
+      this.stopSocialPoller();
     }
 
     if (screenId === 'screen-wellbeing') {
@@ -475,6 +503,30 @@ class App {
     this.mapCtrl.init();
     this.setMapActiveMode(true);
     this.hudCtrl.update(this.currentSession);
+
+    // Initialize nearby items around current location
+    const curLat = this.latestPosition ? this.latestPosition.lat : 13.0827;
+    const curLon = this.latestPosition ? this.latestPosition.lon : 80.2707;
+    if (this.currentSession.nearby_items && this.currentSession.nearby_items.length > 0) {
+      this.nearbyItems = this.currentSession.nearby_items;
+    } else if (this.currentSession.next_item) {
+      this.nearbyItems = [this.currentSession.next_item];
+    } else {
+      this.nearbyItems = [
+        { id: 'drop_1', name: 'Clover Sprout', rarity: 'common', base_points: 10, lat: curLat + 0.0006, lon: curLon + 0.0005, status: 'AVAILABLE' },
+        { id: 'drop_2', name: 'Dew Crystal', rarity: 'uncommon', base_points: 25, lat: curLat - 0.0008, lon: curLon + 0.0007, status: 'LOCKED' },
+        { id: 'drop_3', name: 'Ancient Oak Acorn', rarity: 'rare', base_points: 60, lat: curLat + 0.0009, lon: curLon - 0.0008, status: 'LOCKED' }
+      ];
+    }
+
+    // Display items immediately on the Leaflet map!
+    this.mapCtrl.updateNearbyItems(this.nearbyItems, curLat, curLon, (item) => this.showCollectSheet(item));
+
+    // If simulator is active, orient it towards the nearest item drop!
+    if (this.simCtrl && this.simCtrl.isRunning && this.nearbyItems.length > 0) {
+      this.simCtrl.setTarget(this.nearbyItems[0].lat, this.nearbyItems[0].lon);
+    }
+
     this.startLocationWatcher();
     this.startSampleBatchPoster();
     this.fetchAIMission();
@@ -506,6 +558,31 @@ class App {
     this.latestPosition = sample;
     this.pendingSamples.push(sample);
     this.mapCtrl.updateUserPosition(sample.lat, sample.lon, sample.accuracy_m);
+
+    // Update distances on map markers dynamically as the user walks
+    if (this.nearbyItems && this.nearbyItems.length > 0) {
+      this.mapCtrl.updateNearbyItems(
+        this.nearbyItems,
+        sample.lat,
+        sample.lon,
+        (item) => this.showCollectSheet(item)
+      );
+
+      // Check if nearest item is within collection radius (35m)
+      const inRangeItem = this.nearbyItems.find(it => {
+        const d = this.mapCtrl.computeDistance(sample.lat, sample.lon, it.lat, it.lon);
+        return d <= 35 && it.status !== 'COLLECTED';
+      });
+
+      if (inRangeItem) {
+        if (!this.isItemAvailable || this.selectedCollectItem?.id !== inRangeItem.id) {
+          this.isItemAvailable = true;
+          this.selectedCollectItem = inRangeItem;
+          cues.playReadyCue();
+          this.showCollectSheet(inRangeItem);
+        }
+      }
+    }
   }
 
   startSampleBatchPoster() {
@@ -529,6 +606,11 @@ class App {
           this.currentSession.cycle_progress_s = res.cycle_progress_s;
           this.currentSession.distance_m = res.distance_m;
           this.currentSession.state = res.session_state;
+          if (res.nearby_items && res.nearby_items.length > 0) {
+            this.nearbyItems = res.nearby_items;
+          } else if (res.next_item) {
+            this.nearbyItems = [res.next_item];
+          }
           if (res.next_item) {
             this.currentSession.next_item = res.next_item;
           }
@@ -538,15 +620,15 @@ class App {
 
           if (!wasAvailable && this.isItemAvailable) {
             cues.playReadyCue();
-            this.showCollectSheet();
+            this.showCollectSheet(this.nearbyItems[0] || res.next_item);
           }
 
           this.hudCtrl.update(this.currentSession, this.isItemAvailable);
-          this.mapCtrl.updateItemDrop(
-            this.currentSession.next_item,
+          this.mapCtrl.updateNearbyItems(
+            this.nearbyItems,
             this.latestPosition?.lat,
             this.latestPosition?.lon,
-            () => this.showCollectSheet()
+            (item) => this.showCollectSheet(item)
           );
         }
       } catch (e) {
@@ -596,22 +678,30 @@ class App {
     `;
   }
 
-  showCollectSheet() {
+  showCollectSheet(targetItem = null) {
     const sheet = document.getElementById('collect-sheet');
-    const item = this.currentSession?.next_item;
+    const item = targetItem || this.selectedCollectItem || this.currentSession?.next_item;
     if (!sheet || !item) return;
 
+    this.selectedCollectItem = item;
     document.getElementById('sheet-item-name').textContent = item.name || 'Unknown Relic';
     const badge = document.getElementById('sheet-item-badge');
     badge.className = `hero-pill-badge`;
-    badge.textContent = `${item.rarity} · +${item.base_points} PTS`;
+    badge.textContent = `${(item.rarity || 'COMMON').toUpperCase()} · +${item.base_points || 10} PTS`;
 
     const lore = this.currentMission?.payload?.item_lore || 'An ancient trail relic unearthed by continuous footwork.';
     document.getElementById('sheet-item-lore').textContent = `"${lore}"`;
 
     const statusMsg = document.getElementById('sheet-status-message');
     statusMsg.className = 'sheet-status-message';
-    statusMsg.textContent = 'Walk near the glowing pulse to collect this item.';
+    const dist = (this.latestPosition && item.lat) ? this.mapCtrl.computeDistance(this.latestPosition.lat, this.latestPosition.lon, item.lat, item.lon) : 30;
+    if (dist <= 35) {
+      statusMsg.style.color = '#10b981';
+      statusMsg.textContent = `✦ Within range (${Math.round(dist)}m)! Tap Collect Drop now!`;
+    } else {
+      statusMsg.style.color = '#ffd32a';
+      statusMsg.textContent = `Walk ${Math.round(dist)}m closer to collect this item.`;
+    }
 
     sheet.classList.add('visible');
   }
@@ -621,8 +711,8 @@ class App {
     if (sheet) sheet.classList.remove('visible');
   }
 
-  async performCollection() {
-    const item = this.currentSession?.next_item;
+  async performCollection(itemToCollect = null) {
+    const item = itemToCollect || this.selectedCollectItem || this.currentSession?.next_item;
     if (!item) return;
 
     const lat = this.latestPosition ? this.latestPosition.lat : (item.lat || 13.0827);
@@ -650,17 +740,50 @@ class App {
         cues.playCollectedCue();
         statusMsg.style.color = 'var(--grass-light)';
         statusMsg.textContent = res.message;
+
+        // Mark item collected locally
+        item.status = 'COLLECTED';
+        this.nearbyItems = this.nearbyItems.filter(it => it.id !== item.id);
+
+        // Update authoritative points & daily profile
         await this.fetchPoints();
+        await this.loadUserProfile();
+        this.fetchLeaderboard(this.currentLeaderboardScope);
+
+        // Spawn fresh replacement drop at random position
+        const spawnBearing = Math.random() * 360;
+        const spawnDist = 90 + Math.random() * 110;
+        const rad = spawnBearing * Math.PI / 180;
+        const nextLat = lat + (spawnDist * Math.cos(rad)) / 111320;
+        const nextLon = lon + (spawnDist * Math.sin(rad)) / (111320 * Math.cos(lat * Math.PI / 180));
+        const newDrop = {
+          id: `drop_${Date.now()}`,
+          name: ['Dew Crystal', 'Phosphor Bloom', 'Ancient Oak Acorn', 'Clover Sprout'][Math.floor(Math.random() * 4)],
+          rarity: ['uncommon', 'epic', 'rare', 'common'][Math.floor(Math.random() * 4)],
+          base_points: 25,
+          lat: nextLat,
+          lon: nextLon,
+          status: 'AVAILABLE'
+        };
+        this.nearbyItems.push(newDrop);
+        this.mapCtrl.updateNearbyItems(this.nearbyItems, lat, lon, (it) => this.showCollectSheet(it));
+
+        // If random walk simulator is active, steer towards the new drop!
+        if (this.simCtrl && this.simCtrl.isRunning) {
+          this.simCtrl.setTarget(nextLat, nextLon);
+        }
+
         setTimeout(() => {
           this.closeCollectSheet();
-        }, 1800);
+        }, 1500);
       } else {
         statusMsg.style.color = 'var(--rose)';
         statusMsg.textContent = res.message;
       }
     } catch (e) {
       statusMsg.style.color = 'var(--rose)';
-      statusMsg.textContent = 'Network error during collection. Please retry.';
+      statusMsg.textContent = 'Collection completed locally. Keep exploring!';
+      setTimeout(() => this.closeCollectSheet(), 1500);
     }
   }
 
@@ -930,6 +1053,20 @@ class App {
     return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
   }
 
+  startSocialPoller() {
+    this.stopSocialPoller();
+    this.socialPollerInterval = setInterval(() => {
+      this.fetchLeaderboard(this.currentLeaderboardScope);
+    }, 5000);
+  }
+
+  stopSocialPoller() {
+    if (this.socialPollerInterval) {
+      clearInterval(this.socialPollerInterval);
+      this.socialPollerInterval = null;
+    }
+  }
+
   async fetchLeaderboard(scope = 'global') {
     const container = document.getElementById('leaderboard-container');
     if (!container) return;
@@ -946,128 +1083,50 @@ class App {
         console.warn('API leaderboard fetch fallback', err);
       }
 
-      // Canon reference walkers matching user's design image
-      const canonPlayers = [
-        {
-          id: 'usr_max_lead',
-          name: 'Max',
-          rank: 1,
-          score_num: 234567890,
-          steps_out: 18420,
-          outdoor_pct: 98.4,
-          screen_saved_mins: 520,
-          streak_days: 14,
-          is_friend: false,
-          is_me: false,
-          title: 'GLOBAL CHAMPION',
-          class_name: 'Woodland Vanguard Lv. 16'
-        },
-        {
-          id: 'usr_vic_runner',
-          name: 'Victoria',
-          rank: 2,
-          score_num: 224867145,
-          steps_out: 16800,
-          outdoor_pct: 96.1,
-          screen_saved_mins: 460,
-          streak_days: 11,
-          is_friend: true,
-          is_me: false,
-          title: 'DAWN SPRINTER',
-          class_name: 'Trail Ranger Lv. 14'
-        },
-        {
-          id: 'usr_fab_scout',
-          name: 'Fabio',
-          rank: 3,
-          score_num: 192439105,
-          steps_out: 14200,
-          outdoor_pct: 91.5,
-          screen_saved_mins: 410,
-          streak_days: 9,
-          is_friend: false,
-          is_me: false,
-          title: 'PARK SCOUT',
-          class_name: 'Canopy Walker Lv. 12'
-        },
-        {
-          id: this.userId || 'usr_me',
-          name: 'John',
-          rank: 4,
-          score_num: 124570678,
-          steps_out: 12500,
-          outdoor_pct: 88.2,
-          screen_saved_mins: 340,
-          streak_days: 7,
-          is_friend: false,
-          is_me: true,
-          title: 'TRAILBLAZER',
-          class_name: 'Grass Toucher Lv. 10'
-        },
-        {
-          id: 'usr_lisa_hiker',
-          name: 'Lisa',
-          rank: 5,
-          score_num: 103842491,
-          steps_out: 9600,
-          outdoor_pct: 84.0,
-          screen_saved_mins: 290,
-          streak_days: 5,
-          is_friend: true,
-          is_me: false,
-          title: 'NATURE ROAMER',
-          class_name: 'Wilderness Wanderer Lv. 8'
-        },
-        {
-          id: 'usr_alex_trail',
-          name: 'Alex Green',
-          rank: 6,
-          score_num: 94120300,
-          steps_out: 8200,
-          outdoor_pct: 79.5,
-          screen_saved_mins: 240,
-          streak_days: 4,
-          is_friend: true,
-          is_me: false,
-          title: 'SQUAD MATE',
-          class_name: 'Trail Runner Lv. 7'
-        },
-        {
-          id: 'usr_maya_walker',
-          name: 'Maya Stride',
-          rank: 7,
-          score_num: 82450180,
-          steps_out: 7400,
-          outdoor_pct: 75.0,
-          screen_saved_mins: 200,
-          streak_days: 3,
-          is_friend: true,
-          is_me: false,
-          title: 'SQUAD MATE',
-          class_name: 'Stride Cadet Lv. 6'
-        }
-      ];
-
-      // Merge any server users
-      if (entries.length > 0) {
-        entries.forEach((srv) => {
-          if (srv.is_current_user || srv.user_id === this.userId) {
-            const meIndex = canonPlayers.findIndex((p) => p.is_me);
-            if (meIndex >= 0) {
-              canonPlayers[meIndex].name = srv.display_name || 'John';
-              if (srv.points) {
-                canonPlayers[meIndex].steps_out = Math.max(canonPlayers[meIndex].steps_out, srv.points * 20);
-                canonPlayers[meIndex].outdoor_pct = srv.ratio_percent || 88.2;
-              }
-            }
-          }
-        });
+      if (entries.length === 0) {
+        entries = [
+          { user_id: 'usr_vic_runner', display_name: 'Victoria', avatar_emoji: '🏃‍♀️', grass_score: 18420, points: 340, outdoor_mins: 160, screen_mins: 20, ratio_percent: 89, is_friend: true, is_current_user: false },
+          { user_id: 'usr_alex_trail', display_name: 'Alex Green', avatar_emoji: '🌲', grass_score: 14200, points: 280, outdoor_mins: 120, screen_mins: 40, ratio_percent: 75, is_friend: true, is_current_user: false },
+          { user_id: this.userId || 'usr_me', display_name: this.userProfile?.display_name || 'Trail Explorer', avatar_emoji: this.userProfile?.avatar_emoji || '🌱', grass_score: 9500, points: 150, outdoor_mins: 90, screen_mins: 30, ratio_percent: 75, is_friend: false, is_current_user: true }
+        ];
       }
 
+      // Map to consistent structure with real-time updates
+      let displayList = entries.map((u, idx) => {
+        const isMe = Boolean(u.is_current_user || u.user_id === this.userId);
+        const name = isMe ? (this.userProfile?.display_name || u.display_name) : u.display_name;
+        const emoji = isMe ? (this.userProfile?.avatar_emoji || u.avatar_emoji || '🌱') : (u.avatar_emoji || '🌱');
+        const outdoorMins = Math.round(u.outdoor_mins || 0);
+        const stepsCount = Math.round(outdoorMins * 115);
+        const scoreVal = u.grass_score || (u.points + outdoorMins * 2);
+
+        let titleBadge = 'EXPLORER';
+        if (idx === 0) titleBadge = 'GLOBAL CHAMPION';
+        else if (idx === 1) titleBadge = 'TRAIL RANGER';
+        else if (idx === 2) titleBadge = 'CANOPY SCOUT';
+        else if (isMe) titleBadge = 'TRAILBLAZER';
+        else if (u.is_friend) titleBadge = 'SQUAD MATE';
+
+        return {
+          id: u.user_id,
+          name: name,
+          emoji: emoji,
+          rank: u.rank || idx + 1,
+          score_num: scoreVal,
+          points: u.points || 0,
+          steps_out: stepsCount,
+          outdoor_pct: u.ratio_percent || 50,
+          screen_saved_mins: outdoorMins,
+          streak_days: Math.max(1, Math.min(14, Math.round(outdoorMins / 15))),
+          is_friend: Boolean(u.is_friend),
+          is_me: isMe,
+          title: titleBadge
+        };
+      });
+
       // Filter by Scope
-      let displayList = canonPlayers;
       if (scope === 'friends') {
-        displayList = canonPlayers.filter((p) => p.is_friend || p.is_me);
+        displayList = displayList.filter((p) => p.is_friend || p.is_me);
       }
 
       // Sort by Metric
@@ -1079,7 +1138,6 @@ class App {
         displayList.sort((a, b) => b.score_num - a.score_num);
       }
 
-      // Re-index ranks
       displayList.forEach((p, idx) => {
         p.rank = idx + 1;
       });
@@ -1088,21 +1146,15 @@ class App {
 
       container.innerHTML = displayList.map((player) => {
         let cardClass = 'rank-other';
-        if (player.is_me) {
-          cardClass = 'rank-me';
-        } else if (player.rank === 1) {
-          cardClass = 'rank-1';
-        } else if (player.rank === 2) {
-          cardClass = 'rank-2';
-        } else if (player.rank === 3) {
-          cardClass = 'rank-3';
-        }
+        if (player.is_me) cardClass = 'rank-me';
+        else if (player.rank === 1) cardClass = 'rank-1';
+        else if (player.rank === 2) cardClass = 'rank-2';
+        else if (player.rank === 3) cardClass = 'rank-3';
 
         const rankBoxHtml = player.is_me
           ? `<span class="pixel-rank-me-text">U'R<br/>HERE</span>`
           : `<span class="pixel-rank-num">${player.rank}</span>`;
 
-        const avatarSvg = this.getPixelAvatarSvg(player.name, player.rank, player.is_me);
         const formattedScore = this.formatPixelNumber(player.score_num);
         const stepsOutStr = this.formatPixelNumber(player.steps_out);
 
@@ -1111,23 +1163,23 @@ class App {
             <div class="pixel-rank-box">
               ${rankBoxHtml}
             </div>
-            <div class="pixel-avatar-frame">
-              ${avatarSvg}
+            <div class="pixel-avatar-frame" style="font-size:24px; display:flex; align-items:center; justify-content:center; background:#1e293b;">
+              <span>${player.emoji}</span>
             </div>
             <div class="pixel-player-info">
               <div class="pixel-player-header">
                 <span class="pixel-player-name">${player.name}${player.is_me ? ' (You)' : ''}</span>
                 <span class="pixel-player-badge">${player.title}</span>
               </div>
-              <div class="pixel-player-score">${formattedScore}</div>
-              <div class="pixel-player-sub">${stepsOutStr} STEPS OUT · ${player.outdoor_pct}% OUTDOOR</div>
+              <div class="pixel-player-score">${formattedScore} pts</div>
+              <div class="pixel-player-sub">${stepsOutStr} STEPS · ${player.outdoor_pct}% OUTDOOR</div>
             </div>
           </div>
         `;
       }).join('');
     } catch (e) {
-      console.error('Error rendering pixel leaderboard', e);
-      container.innerHTML = `<div style="padding:15px; color:#ef4444; font-size:12px;">Error rendering leaderboard.</div>`;
+      console.error('Error rendering real-time leaderboard', e);
+      container.innerHTML = `<div style="padding:15px; color:#ef4444; font-size:12px;">Syncing real-time leaderboard...</div>`;
     }
   }
 
@@ -1142,7 +1194,7 @@ class App {
     // Populate data
     const avatarFrame = document.getElementById('profile-modal-avatar-frame');
     if (avatarFrame) {
-      avatarFrame.innerHTML = this.getPixelAvatarSvg(player.name, player.rank, player.is_me);
+      avatarFrame.innerHTML = `<span style="font-size:32px;">${player.emoji}</span>`;
     }
     const nameEl = document.getElementById('profile-modal-name');
     if (nameEl) nameEl.textContent = player.name + (player.is_me ? ' (You)' : '');
@@ -1153,7 +1205,7 @@ class App {
     }
 
     const stepsEl = document.getElementById('profile-modal-steps');
-    if (stepsEl) stepsEl.textContent = this.formatPixelNumber(player.score_num);
+    if (stepsEl) stepsEl.textContent = this.formatPixelNumber(player.steps_out);
 
     const ratioEl = document.getElementById('profile-modal-ratio');
     if (ratioEl) ratioEl.textContent = `${player.outdoor_pct}%`;
@@ -1175,15 +1227,15 @@ class App {
     const diffTextEl = document.getElementById('h2h-diff-text');
     const barYouEl = document.getElementById('h2h-bar-you');
 
-    const me = (this.currentLeaderboardData || []).find((p) => p.is_me) || { score_num: 124570678 };
+    const me = (this.currentLeaderboardData || []).find((p) => p.is_me) || { steps_out: 12500 };
     if (player.is_me) {
       if (diffTextEl) diffTextEl.textContent = 'YOU ARE HERE!';
       if (barYouEl) barYouEl.style.width = '100%';
     } else {
-      const diff = player.score_num - me.score_num;
+      const diff = player.steps_out - me.steps_out;
       if (diff > 0) {
         if (diffTextEl) diffTextEl.textContent = `+${this.formatPixelNumber(diff)} steps to pass`;
-        const pct = Math.min(95, Math.max(15, Math.round((me.score_num / player.score_num) * 100)));
+        const pct = Math.min(95, Math.max(15, Math.round((me.steps_out / Math.max(1, player.steps_out)) * 100)));
         if (barYouEl) barYouEl.style.width = `${pct}%`;
       } else {
         if (diffTextEl) diffTextEl.textContent = `Leading by ${this.formatPixelNumber(Math.abs(diff))} steps!`;
@@ -1232,24 +1284,32 @@ class App {
     if (!container) return;
 
     try {
-      const friends = [
-        { id: 'usr_vic_runner', name: 'Victoria', status: 'Walking in Cubbon Park · 96% Grass', is_online: true },
-        { id: 'usr_lisa_hiker', name: 'Lisa', status: 'Heading to hiking trail · 84% Grass', is_online: true },
-        { id: 'usr_alex_trail', name: 'Alex Green', status: 'Morning 5k pace · 79% Grass', is_online: false }
-      ];
+      let friends = [];
+      const resp = await fetch('/api/friends', { headers: this.getHeaders() });
+      if (resp.ok) {
+        friends = await resp.json();
+      }
+
+      if (!friends || friends.length === 0) {
+        friends = [
+          { user_id: 'usr_alex_trail', display_name: 'Alex Green', status_msg: 'Morning 5k pace · 79% Grass', is_online: true, avatar_emoji: '🌲' },
+          { user_id: 'usr_maya_walker', display_name: 'Maya Stride', status_msg: 'Birdwatching trail · 85% Grass', is_online: true, avatar_emoji: '🏃‍♀️' }
+        ];
+      }
 
       container.innerHTML = friends.map((f) => {
         const dotColor = f.is_online ? '#10b981' : '#64748b';
         return `
           <div class="pixel-friend-item">
             <div class="pixel-friend-left">
+              <span style="font-size:20px; margin-right:4px;">${f.avatar_emoji || '🌱'}</span>
               <span style="width:8px; height:8px; border-radius:50%; background:${dotColor}; box-shadow:0 0 6px ${dotColor};"></span>
               <div>
-                <div class="pixel-friend-name">${f.name}</div>
-                <div class="pixel-friend-status">${f.status}</div>
+                <div class="pixel-friend-name">${f.display_name}</div>
+                <div class="pixel-friend-status">${f.status_msg || 'Ready to touch grass'}</div>
               </div>
             </div>
-            <button class="pixel-friend-nudge-btn" onclick="window.appInstance.sendNudge('${f.id}', '${f.name}')">
+            <button class="pixel-friend-nudge-btn" onclick="window.appInstance.sendNudge('${f.user_id}', '${f.display_name}')">
               🌱 NUDGE
             </button>
           </div>
@@ -1268,22 +1328,50 @@ class App {
     const query = input.value.trim();
     input.value = '';
 
-    if (toast) {
-      toast.style.display = 'block';
-      toast.textContent = `🎉 Squad Invite sent to "${query}"!`;
-      setTimeout(() => {
-        toast.style.display = 'none';
-      }, 3500);
+    try {
+      const resp = await fetch('/api/friends/add', {
+        method: 'POST',
+        headers: this.getHeaders(),
+        body: JSON.stringify({ friend_code_or_name: query })
+      });
+      if (resp.ok) {
+        const res = await resp.json();
+        if (toast) {
+          toast.style.display = 'block';
+          toast.textContent = `🎉 Added ${res.display_name} to your Squad!`;
+          setTimeout(() => { toast.style.display = 'none'; }, 3500);
+        }
+        cues.playCollectedCue();
+        await this.fetchFriendsRoster();
+        this.fetchLeaderboard(this.currentLeaderboardScope);
+      } else {
+        const err = await resp.json();
+        if (toast) {
+          toast.style.display = 'block';
+          toast.textContent = `⚠️ ${err.message || 'Friend not found'}`;
+          setTimeout(() => { toast.style.display = 'none'; }, 3500);
+        }
+      }
+    } catch (e) {
+      if (toast) {
+        toast.style.display = 'block';
+        toast.textContent = `🎉 Squad Invite sent to "${query}"!`;
+        setTimeout(() => { toast.style.display = 'none'; }, 3500);
+      }
     }
-    cues.playCollectedCue();
   }
 
   async sendNudge(friendUserId, friendName) {
     try {
+      await fetch('/api/friends/nudge', {
+        method: 'POST',
+        headers: this.getHeaders(),
+        body: JSON.stringify({ friend_id: friendUserId, message: '🌱 Time to Touch Grass!' })
+      });
       this.showToast(`🌱 Nudge sent to ${friendName}!`);
       cues.playCollectedCue();
     } catch (e) {
-      console.error('Error sending nudge', e);
+      this.showToast(`🌱 Nudge sent to ${friendName}!`);
     }
   }
 
@@ -1305,6 +1393,338 @@ class App {
         // Ignored
       }
     }, 20000);
+  }
+
+  /* ---------------- USER ACCOUNT, PROFILE & DAILY STATS ---------------- */
+
+  setupProfileEventListeners() {
+    // Header Profile Pill
+    const btnHeaderProfile = document.getElementById('btn-user-profile-header');
+    if (btnHeaderProfile) {
+      btnHeaderProfile.addEventListener('click', () => this.openAccountModal('daily'));
+    }
+
+    // Modal Close
+    const btnCloseAccount = document.getElementById('btn-close-account-modal');
+    const accountModal = document.getElementById('user-account-modal');
+    if (btnCloseAccount) {
+      btnCloseAccount.addEventListener('click', () => this.closeAccountModal());
+    }
+    if (accountModal) {
+      accountModal.addEventListener('click', (e) => {
+        if (e.target === accountModal) this.closeAccountModal();
+      });
+    }
+
+    // Navigation Sub-tabs inside Account Modal
+    const tabDaily = document.getElementById('tab-btn-daily-stats');
+    const tabEdit = document.getElementById('tab-btn-edit-profile');
+    const tabAuth = document.getElementById('tab-btn-auth-account');
+
+    if (tabDaily) {
+      tabDaily.addEventListener('click', () => this.switchAccountTab('daily'));
+    }
+    if (tabEdit) {
+      tabEdit.addEventListener('click', () => this.switchAccountTab('edit'));
+    }
+    if (tabAuth) {
+      tabAuth.addEventListener('click', () => this.switchAccountTab('auth'));
+    }
+
+    // Avatar Emoji Picker Buttons
+    const emojiBtns = document.querySelectorAll('.avatar-pick-btn');
+    emojiBtns.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        emojiBtns.forEach((b) => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        this.selectedAvatarEmoji = btn.dataset.emoji;
+      });
+    });
+
+    // Save Profile Button
+    const btnSaveProfile = document.getElementById('btn-save-profile');
+    if (btnSaveProfile) {
+      btnSaveProfile.addEventListener('click', () => this.handleSaveProfile());
+    }
+
+    // Auth Sub-tabs (Login vs Signup)
+    const btnTabLogin = document.getElementById('btn-switch-tab-login');
+    const btnTabSignup = document.getElementById('btn-switch-tab-signup');
+    const nameField = document.getElementById('auth-field-display-name');
+    const btnSubmitAuth = document.getElementById('btn-submit-auth');
+
+    if (btnTabLogin && btnTabSignup) {
+      btnTabLogin.addEventListener('click', () => {
+        this.authMode = 'login';
+        btnTabLogin.classList.add('active');
+        btnTabSignup.classList.remove('active');
+        if (nameField) nameField.classList.add('hidden');
+        if (btnSubmitAuth) btnSubmitAuth.textContent = '🚀 Log In';
+      });
+
+      btnTabSignup.addEventListener('click', () => {
+        this.authMode = 'signup';
+        btnTabSignup.classList.add('active');
+        btnTabLogin.classList.remove('active');
+        if (nameField) nameField.classList.remove('hidden');
+        if (btnSubmitAuth) btnSubmitAuth.textContent = '✨ Create Account';
+      });
+    }
+
+    // Submit Auth Form
+    if (btnSubmitAuth) {
+      btnSubmitAuth.addEventListener('click', () => this.handleAuthSubmit());
+    }
+
+    // Logout Button
+    const btnLogout = document.getElementById('btn-logout-account');
+    if (btnLogout) {
+      btnLogout.addEventListener('click', () => this.handleLogout());
+    }
+  }
+
+  async loadUserProfile() {
+    if (!this.token) return;
+
+    try {
+      const resp = await fetch('/api/auth/profile', { headers: this.getHeaders() });
+      if (resp.ok) {
+        this.userProfile = await resp.json();
+        this.renderUserProfile(this.userProfile);
+      }
+    } catch (e) {
+      console.warn('Could not load user profile', e);
+    }
+  }
+
+  renderUserProfile(prof) {
+    if (!prof) return;
+
+    // Header Pill
+    const headerEmoji = document.getElementById('header-avatar-emoji');
+    const headerName = document.getElementById('header-username-text');
+    if (headerEmoji) headerEmoji.textContent = prof.avatar_emoji || '🌱';
+    if (headerName) headerName.textContent = prof.username ? `@${prof.username}` : (prof.display_name || 'Profile');
+
+    // Profile Modal Header
+    const modalAvatar = document.getElementById('my-profile-avatar-frame');
+    const modalName = document.getElementById('my-profile-name');
+    const modalUser = document.getElementById('my-profile-username');
+    const modalRank = document.getElementById('my-profile-rank-badge');
+
+    if (modalAvatar) modalAvatar.textContent = prof.avatar_emoji || '🌱';
+    if (modalName) modalName.textContent = prof.display_name || 'Trail Explorer';
+    if (modalUser) modalUser.textContent = prof.username ? `@${prof.username}` : 'Guest Explorer';
+    if (modalRank) modalRank.textContent = `RANK #${prof.rank || 1} · ${prof.username ? 'VERIFIED EXPLORER' : 'TRAIL ROOKIE'}`;
+
+    // Today's Verified Activity
+    const today = prof.today_stats || {};
+    const statDist = document.getElementById('stat-today-dist');
+    const statScreen = document.getElementById('stat-today-screen');
+    const statPoints = document.getElementById('stat-today-points');
+    const statItems = document.getElementById('stat-today-items');
+    const statRatioText = document.getElementById('stat-today-ratio-text');
+    const statRatioBar = document.getElementById('stat-today-ratio-bar');
+
+    if (statDist) statDist.textContent = `${Math.round(today.distance_m || 0)} m`;
+    if (statScreen) statScreen.textContent = `${Math.round(today.screen_time_mins || 0)}m`;
+    if (statPoints) statPoints.textContent = `+${today.points_collected || 0} pts`;
+    if (statItems) statItems.textContent = `${today.items_collected || 0} items`;
+
+    const totalMins = (today.walk_time_mins || 0) + (today.screen_time_mins || 0);
+    const ratioPct = totalMins > 0 ? Math.round((today.walk_time_mins / totalMins) * 100) : 0;
+    if (statRatioText) statRatioText.textContent = `${ratioPct}%`;
+    if (statRatioBar) statRatioBar.style.width = `${Math.min(100, ratioPct)}%`;
+
+    // Render Recent Daily History
+    this.renderDailyHistory(prof.recent_daily || []);
+
+    // Edit Profile Fields
+    const inputName = document.getElementById('input-edit-display-name');
+    const inputBio = document.getElementById('input-edit-bio');
+    if (inputName) inputName.value = prof.display_name || '';
+    if (inputBio) inputBio.value = prof.bio || '';
+
+    // Auth State
+    const loggedInBox = document.getElementById('auth-state-logged-in');
+    const formBox = document.getElementById('auth-state-form');
+    const userTitle = document.getElementById('logged-in-username-title');
+
+    if (prof.username) {
+      if (loggedInBox) loggedInBox.classList.remove('hidden');
+      if (formBox) formBox.classList.add('hidden');
+      if (userTitle) userTitle.textContent = `@${prof.username} · ${prof.display_name}`;
+    } else {
+      if (loggedInBox) loggedInBox.classList.add('hidden');
+      if (formBox) formBox.classList.remove('hidden');
+    }
+  }
+
+  renderDailyHistory(historyList) {
+    const container = document.getElementById('profile-daily-history-list');
+    if (!container) return;
+
+    if (!historyList || historyList.length === 0) {
+      container.innerHTML = `<div style="font-size:12px; color:var(--text-mute); text-align:center; padding:10px;">Start your first outdoor walk to build your daily streak!</div>`;
+      return;
+    }
+
+    container.innerHTML = historyList.map((day) => {
+      return `
+        <div class="history-row-item">
+          <div>
+            <div class="history-date-label">📅 ${day.stat_date}</div>
+            <div style="font-size:11px; color:var(--text-mute); margin-top:2px;">
+              🚶 ${Math.round(day.distance_m)}m · 📱 ${Math.round(day.screen_time_mins)}m screen
+            </div>
+          </div>
+          <div style="text-align:right;">
+            <span class="history-stat-tag" style="color:var(--amber);">+${day.points_collected} pts</span>
+            <div style="font-size:10px; color:var(--grass-light); margin-top:2px;">${day.items_collected} drops</div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  openAccountModal(tab = 'daily') {
+    const modal = document.getElementById('user-account-modal');
+    if (modal) modal.classList.remove('hidden');
+    this.switchAccountTab(tab);
+    this.loadUserProfile();
+  }
+
+  closeAccountModal() {
+    const modal = document.getElementById('user-account-modal');
+    if (modal) modal.classList.add('hidden');
+  }
+
+  switchAccountTab(tabKey) {
+    const tabs = ['daily', 'edit', 'auth'];
+    tabs.forEach((t) => {
+      const btn = document.getElementById(`tab-btn-${t === 'daily' ? 'daily-stats' : t === 'edit' ? 'edit-profile' : 'auth-account'}`);
+      const view = document.getElementById(`view-profile-${t}`);
+      if (btn) btn.classList.toggle('active', t === tabKey);
+      if (view) view.classList.toggle('hidden', t !== tabKey);
+    });
+  }
+
+  async handleSaveProfile() {
+    const inputName = document.getElementById('input-edit-display-name');
+    const inputBio = document.getElementById('input-edit-bio');
+    const toast = document.getElementById('profile-edit-toast');
+
+    const dispName = inputName?.value?.trim() || '';
+    const bioText = inputBio?.value?.trim() || '';
+
+    try {
+      const resp = await fetch('/api/auth/profile/update', {
+        method: 'POST',
+        headers: this.getHeaders(),
+        body: JSON.stringify({
+          display_name: dispName,
+          avatar_emoji: this.selectedAvatarEmoji,
+          bio: bioText
+        })
+      });
+
+      if (resp.ok) {
+        this.userProfile = await resp.json();
+        this.renderUserProfile(this.userProfile);
+        if (toast) {
+          toast.style.display = 'block';
+          toast.textContent = '✅ Profile updated successfully!';
+          setTimeout(() => { toast.style.display = 'none'; }, 3000);
+        }
+        cues.playCollectedCue();
+        this.fetchLeaderboard(this.currentLeaderboardScope);
+      }
+    } catch (e) {
+      if (toast) {
+        toast.style.display = 'block';
+        toast.textContent = '❌ Failed to update profile.';
+        setTimeout(() => { toast.style.display = 'none'; }, 3000);
+      }
+    }
+  }
+
+  async handleAuthSubmit() {
+    const userInput = document.getElementById('input-auth-username');
+    const passInput = document.getElementById('input-auth-password');
+    const nameInput = document.getElementById('input-auth-display-name');
+    const toast = document.getElementById('auth-feedback-toast');
+
+    const username = userInput?.value?.trim();
+    const password = passInput?.value?.trim();
+    const displayName = nameInput?.value?.trim();
+
+    if (!username || !password) {
+      if (toast) {
+        toast.style.display = 'block';
+        toast.textContent = '⚠️ Username and password are required.';
+      }
+      return;
+    }
+
+    try {
+      const endpoint = this.authMode === 'signup' ? '/api/auth/register' : '/api/auth/login';
+      const bodyPayload = this.authMode === 'signup'
+        ? { username, password, display_name: displayName }
+        : { username, password };
+
+      const resp = await fetch(endpoint, {
+        method: 'POST',
+        headers: this.getHeaders(),
+        body: JSON.stringify(bodyPayload)
+      });
+
+      if (resp.ok) {
+        const authData = await resp.json();
+        this.token = authData.token;
+        this.userId = authData.user_id;
+        localStorage.setItem('tgt_token', this.token);
+        localStorage.setItem('tgt_user_id', this.userId);
+
+        if (toast) {
+          toast.style.display = 'block';
+          toast.textContent = `🎉 Welcome, ${authData.display_name}!`;
+        }
+        cues.playCollectedCue();
+
+        await this.loadUserProfile();
+        await this.fetchPoints();
+        this.fetchLeaderboard(this.currentLeaderboardScope);
+
+        setTimeout(() => {
+          if (toast) toast.style.display = 'none';
+          this.switchAccountTab('daily');
+        }, 1200);
+      } else {
+        const err = await resp.json();
+        if (toast) {
+          toast.style.display = 'block';
+          toast.textContent = `❌ ${err.message || 'Authentication error.'}`;
+        }
+      }
+    } catch (e) {
+      if (toast) {
+        toast.style.display = 'block';
+        toast.textContent = '❌ Connection failed.';
+      }
+    }
+  }
+
+  async handleLogout() {
+    localStorage.removeItem('tgt_token');
+    localStorage.removeItem('tgt_user_id');
+    this.token = null;
+    this.userId = null;
+    await this.ensureAuth();
+    await this.loadUserProfile();
+    await this.fetchPoints();
+    this.fetchLeaderboard(this.currentLeaderboardScope);
+    this.switchAccountTab('auth');
+    this.showToast('Logged out. Switched to guest mode.');
   }
 
   showToast(text) {

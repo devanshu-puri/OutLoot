@@ -130,6 +130,13 @@ def process_sample_batch(
             )
         )
 
+        # Record daily stats for genuine walking progress
+        dist_delta = max(0.0, eval_result.new_state.distance_m - float(session_row["distance_m"] or 0.0))
+        time_delta = max(0.0, eval_result.new_state.cycle_progress_s - float(session_row["cycle_progress_s"] or 0.0))
+        if dist_delta > 0 or time_delta > 0:
+            from server.services.profile import record_daily_stats
+            record_daily_stats(conn, user_id, delta_distance_m=dist_delta, delta_walk_s=time_delta)
+
         # Build response with hint
         updated_session = conn.execute("SELECT * FROM sessions WHERE id = ?;", (session_id,)).fetchone()
         session_resp = build_session_response(conn, updated_session, user_id)
@@ -144,5 +151,6 @@ def process_sample_batch(
             cycle_required_s=cycle_req,
             distance_m=eval_result.new_state.distance_m,
             item_available=is_item_avail,
-            next_item=session_resp.next_item
+            next_item=session_resp.next_item,
+            nearby_items=session_resp.nearby_items
         )

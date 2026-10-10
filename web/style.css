@@ -2421,3 +2421,294 @@ html, body {
   margin: 10px 0;
 }
 
+/* ==========================================================================
+   TOP NAV PROFILE PILL
+   ========================================================================== */
+.profile-header-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-full);
+  padding: 5px 12px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: none;
+}
+
+.profile-header-pill:hover,
+.profile-header-pill:active {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.25);
+  transform: translateY(-1px);
+}
+
+#header-avatar-emoji {
+  font-size: 15px;
+}
+
+/* ==========================================================================
+   INTERACTIVE MAP LOOT DROP POPPING MARKERS & PULSING RADAR
+   ========================================================================== */
+.loot-drop-div-icon {
+  background: transparent;
+  border: none;
+}
+
+.drop-marker-wrapper {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  pointer-events: auto;
+  animation: dropPopIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes dropPopIn {
+  0% { transform: scale(0) translateY(-20px); opacity: 0; }
+  70% { transform: scale(1.15) translateY(2px); opacity: 1; }
+  100% { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+.drop-radar-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 48px;
+  height: 48px;
+  margin-top: -24px;
+  margin-left: -24px;
+  border-radius: 50%;
+  border: 2px solid var(--rarity-color, #10b981);
+  box-shadow: 0 0 15px var(--rarity-color, #10b981);
+  animation: dropRadarPulse 2.4s infinite cubic-bezier(0.215, 0.61, 0.355, 1);
+  pointer-events: none;
+}
+
+@keyframes dropRadarPulse {
+  0% {
+    transform: scale(0.6);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+}
+
+.drop-marker-bubble {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #2a2b36, #12131a);
+  border: 2px solid var(--rarity-color, #10b981);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6), 0 0 12px var(--rarity-color, #10b981);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 2;
+  transition: transform 0.2s ease;
+}
+
+.drop-marker-wrapper:hover .drop-marker-bubble {
+  transform: scale(1.12);
+}
+
+.drop-marker-wrapper.in-range .drop-marker-bubble {
+  animation: dropBouncePrompt 1.2s infinite ease-in-out;
+  box-shadow: 0 0 20px var(--rarity-color, #10b981), 0 0 35px var(--rarity-color, #10b981);
+}
+
+@keyframes dropBouncePrompt {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-7px) scale(1.1); }
+}
+
+.drop-emoji {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.drop-label-pill {
+  position: absolute;
+  top: 44px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(15, 17, 23, 0.88);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--rarity-color, #10b981);
+  padding: 2px 7px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 800;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+  z-index: 3;
+}
+
+.drop-label-name {
+  color: #fff;
+}
+
+.drop-label-dist {
+  color: var(--rarity-color, #10b981);
+}
+
+/* ==========================================================================
+   USER ACCOUNT & DAILY ACTIVITY MODAL
+   ========================================================================== */
+.user-account-card {
+  max-width: 420px;
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+.profile-nav-tabs {
+  display: flex;
+  gap: 6px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--border-subtle);
+  padding: 4px;
+  border-radius: 6px;
+  margin-bottom: 14px;
+}
+
+.profile-nav-tab {
+  flex: 1;
+  padding: 8px 6px;
+  background: transparent;
+  border: none;
+  color: var(--text-mute);
+  font-size: 12px;
+  font-weight: 800;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.profile-nav-tab.active {
+  background: #10b981;
+  color: #000;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.4);
+}
+
+.profile-avatar-frame.my-avatar {
+  font-size: 32px;
+  background: radial-gradient(circle, #1e293b, #0f172a);
+  border-color: #10b981;
+}
+
+.profile-handle {
+  font-size: 12px;
+  color: var(--text-mute);
+  font-family: 'VCR_OSD_MONO', monospace;
+  margin-top: -2px;
+}
+
+/* Daily History Stack */
+.daily-history-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.history-row-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-size: 12px;
+}
+
+.history-date-label {
+  font-weight: 800;
+  color: #fff;
+}
+
+.history-stat-tag {
+  display: inline-block;
+  font-family: 'VCR_OSD_MONO', monospace;
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* Avatar Emoji Picker */
+.avatar-emoji-picker-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.avatar-pick-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-subtle);
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.avatar-pick-btn:hover,
+.avatar-pick-btn.selected {
+  background: rgba(16, 185, 129, 0.2);
+  border-color: #10b981;
+  transform: scale(1.1);
+}
+
+/* Auth sub tabs */
+.auth-form-tabs {
+  display: flex;
+  gap: 6px;
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: 8px;
+}
+
+.auth-sub-tab {
+  flex: 1;
+  padding: 6px 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid transparent;
+  color: var(--text-mute);
+  font-weight: 800;
+  font-size: 12px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.auth-sub-tab.active {
+  background: rgba(16, 185, 129, 0.15);
+  border-color: #10b981;
+  color: #10b981;
+}
+
+.auth-logged-card {
+  text-align: center;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+}
+
+
